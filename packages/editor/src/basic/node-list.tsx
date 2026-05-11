@@ -10,30 +10,11 @@ import { KEYS } from "platejs"
 import {
 	type PlateElementProps,
 	type RenderNodeWrapper,
-	useEditorSelector,
 	useReadOnly,
 } from "platejs/react"
 import { useCallback } from "react"
-import { FoldChevron } from "./fold"
+import { FoldChevron, useBlockHasChildren } from "./fold"
 import { resolveListStyleTypeByIndent } from "./list-style-utils"
-
-function useListItemHasChildren(
-	path: readonly number[],
-	indent: number,
-): boolean {
-	const topLevelIdx = path[0]
-	return useEditorSelector(
-		(editor) => {
-			if (typeof topLevelIdx !== "number") return false
-			const next = editor.children[topLevelIdx + 1] as
-				| { indent?: number }
-				| undefined
-			if (!next) return false
-			return (next.indent ?? 0) > indent
-		},
-		[topLevelIdx, indent],
-	)
-}
 
 const config: Record<
 	string,
@@ -109,7 +90,7 @@ function TodoLi(props: PlateElementProps) {
 	const indent = ((props.element as { indent?: number }).indent ?? 0) as number
 	const elementId =
 		typeof props.element.id === "string" ? props.element.id : undefined
-	const hasChildren = useListItemHasChildren(props.path, indent)
+	const hasChildren = useBlockHasChildren(props.path, indent)
 	return (
 		<li
 			className={cn(
@@ -133,7 +114,7 @@ function DefaultLi(props: PlateElementProps) {
 	const indent = ((props.element as { indent?: number }).indent ?? 0) as number
 	const elementId =
 		typeof props.element.id === "string" ? props.element.id : undefined
-	const hasChildren = useListItemHasChildren(props.path, indent)
+	const hasChildren = useBlockHasChildren(props.path, indent)
 	return (
 		<li
 			className="mn-list-item group"

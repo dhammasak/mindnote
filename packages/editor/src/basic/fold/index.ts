@@ -1,4 +1,5 @@
 export { FoldChevron } from "./fold-chevron"
+export { useBlockHasChildren } from "./use-has-children"
 export {
 	FoldKit,
 	FoldPlugin,
