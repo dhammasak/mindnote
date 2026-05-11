@@ -46,7 +46,7 @@ async function createSystemTray() {
 					action: () => {
 						createQuickNoteWindow()
 					},
-					accelerator: "CmdOrCtrl+Alt+N",
+					accelerator: "CmdOrCtrl+Shift+N",
 				},
 				await PredefinedMenuItem.new({
 					item: "Separator",
@@ -61,7 +61,7 @@ async function createSystemTray() {
 
 export function SystemTray() {
 	useEffect(() => {
-		const shortcut = "CmdOrCtrl+Alt+N"
+		const shortcut = "CmdOrCtrl+Shift+N"
 
 		register(shortcut, (event) => {
 			if (event.state === "Released") {

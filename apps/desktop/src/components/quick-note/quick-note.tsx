@@ -16,12 +16,14 @@ import { WindowPinButton } from "./window-pin-button"
 
 // Strip filesystem-unsafe chars and clamp to a sane length.
 function sanitizeFilename(name: string): string {
-	return name
-		// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional control-char filter for filesystem safety
-		.replace(/[/\\:*?"<>|\x00-\x1f]/g, " ")
-		.replace(/\s+/g, " ")
-		.trim()
-		.slice(0, 200)
+	return (
+		name
+			// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional control-char filter for filesystem safety
+			.replace(/[/\\:*?"<>|\x00-\x1f]/g, " ")
+			.replace(/\s+/g, " ")
+			.trim()
+			.slice(0, 200)
+	)
 }
 
 // Find a non-conflicting path under `dir`. "Foo.md", "Foo 2.md", "Foo 3.md", …
