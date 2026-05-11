@@ -1,12 +1,12 @@
 import { useCallback, useEffect } from "react"
 import { useShallow } from "zustand/shallow"
 import { closeTabOrHideWindow } from "@/lib/close-tab-or-hide-window"
+import { createNoteInDefaultFolder } from "@/lib/note-creation"
 import { useStore } from "@/store"
 import { installWindowMenu } from "./menu"
 
 export function WindowMenu() {
 	const {
-		createAndOpenNote,
 		activeTabId,
 		isEditMode,
 		closeActiveTab,
@@ -19,7 +19,6 @@ export function WindowMenu() {
 		goForward,
 	} = useStore(
 		useShallow((s) => ({
-			createAndOpenNote: s.createAndOpenNote,
 			activeTabId: s.activeTabId,
 			isEditMode: s.isEditMode,
 			closeActiveTab: s.closeActiveTab,
@@ -71,7 +70,9 @@ export function WindowMenu() {
 
 	useEffect(() => {
 		installWindowMenu({
-			createNote: createAndOpenNote,
+			createNote: () => {
+				void createNoteInDefaultFolder()
+			},
 			closeTabOrHideWindow: handleCloseTab,
 			openWorkspace: () => openFolderPicker(),
 			activatePreviousTab,
@@ -96,7 +97,6 @@ export function WindowMenu() {
 			hotkeys,
 		})
 	}, [
-		createAndOpenNote,
 		handleCloseTab,
 		openFolderPicker,
 		activatePreviousTab,

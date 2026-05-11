@@ -5,11 +5,12 @@ import { Button } from "@mdit/ui/components/button"
 import { invoke } from "@tauri-apps/api/core"
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { save as saveDialog } from "@tauri-apps/plugin-dialog"
-import { exists, writeTextFile } from "@tauri-apps/plugin-fs"
+import { exists, mkdir, writeTextFile } from "@tauri-apps/plugin-fs"
 import { join } from "pathe"
 import { useCallback, useEffect } from "react"
 import { toast } from "sonner"
 import { useLocation } from "wouter"
+import { DEFAULT_NEW_NOTE_SUBFOLDER } from "@/lib/note-creation"
 import { isMac } from "@/utils/platform"
 import { EditorKit } from "../editor/plugins/editor-kit"
 import { WindowPinButton } from "./window-pin-button"
@@ -67,6 +68,18 @@ async function loadActiveWorkspacePath(): Promise<string | null> {
 	}
 }
 
+// Resolve the default save folder for new Quick Notes: <workspace>/MindNote/.
+// Creates the subfolder on first use. Returns null when no workspace is set.
+async function resolveDefaultSaveDir(): Promise<string | null> {
+	const workspacePath = await loadActiveWorkspacePath()
+	if (!workspacePath) return null
+	const targetDir = join(workspacePath, DEFAULT_NEW_NOTE_SUBFOLDER)
+	if (!(await exists(targetDir))) {
+		await mkdir(targetDir, { recursive: true })
+	}
+	return targetDir
+}
+
 export function QuickNote() {
 	const [, navigate] = useLocation()
 	const editor = usePlateEditor({
@@ -91,10 +104,10 @@ export function QuickNote() {
 			)
 			if (!payload) return
 
-			const workspacePath = await loadActiveWorkspacePath()
+			const targetDir = await resolveDefaultSaveDir()
 			let savedPath: string
-			if (workspacePath) {
-				savedPath = await findUniquePath(workspacePath, payload.fileBase)
+			if (targetDir) {
+				savedPath = await findUniquePath(targetDir, payload.fileBase)
 				await writeTextFile(savedPath, payload.body)
 			} else {
 				// No workspace yet — fall back to a native dialog.
@@ -128,9 +141,9 @@ export function QuickNote() {
 				return
 			}
 
-			const workspacePath = await loadActiveWorkspacePath()
-			if (workspacePath) {
-				const filePath = await findUniquePath(workspacePath, payload.fileBase)
+			const targetDir = await resolveDefaultSaveDir()
+			if (targetDir) {
+				const filePath = await findUniquePath(targetDir, payload.fileBase)
 				await writeTextFile(filePath, payload.body)
 				await appWindow.close()
 				return

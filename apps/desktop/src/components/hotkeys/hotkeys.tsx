@@ -7,6 +7,7 @@ import { useHotkey } from "@tanstack/react-hotkeys"
 import { useCallback, useMemo } from "react"
 import { useShallow } from "zustand/shallow"
 import { closeTabOrHideWindow } from "@/lib/close-tab-or-hide-window"
+import { createNoteInDefaultFolder } from "@/lib/note-creation"
 import { useStore } from "@/store"
 
 const HOTKEY_OPTIONS = { preventDefault: true } as const
@@ -38,7 +39,6 @@ export function getTabIdForNumberShortcut<T extends { id: number }>(
 export function Hotkeys() {
 	const {
 		hotkeys,
-		createAndOpenNote,
 		activeTabId,
 		isEditMode,
 		closeActiveTab,
@@ -64,7 +64,6 @@ export function Hotkeys() {
 	} = useStore(
 		useShallow((s) => ({
 			hotkeys: s.hotkeys,
-			createAndOpenNote: s.createAndOpenNote,
 			activeTabId: s.activeTabId,
 			isEditMode: s.isEditMode,
 			closeActiveTab: s.closeActiveTab,
@@ -116,7 +115,7 @@ export function Hotkeys() {
 	const actionHandlers = useMemo<Record<AppHotkeyActionId, () => void>>(
 		() => ({
 			"create-note": () => {
-				void createAndOpenNote()
+				void createNoteInDefaultFolder()
 			},
 			"close-tab": handleCloseTab,
 			"open-folder": () => {
@@ -173,7 +172,6 @@ export function Hotkeys() {
 			},
 		}),
 		[
-			createAndOpenNote,
 			handleCloseTab,
 			openFolderPicker,
 			activatePreviousTab,
