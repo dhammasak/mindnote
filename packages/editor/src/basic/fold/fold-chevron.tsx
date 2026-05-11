@@ -44,10 +44,10 @@ export function FoldChevron({
 			onMouseDown={(e) => e.preventDefault()}
 			onClick={handleClick}
 			className={cn(
-				"mn-fold-chevron text-muted-foreground hover:text-foreground",
+				"mn-fold-chevron text-muted-foreground hover:text-foreground hover:bg-accent",
 				"absolute top-1/2 -translate-y-1/2 grid place-items-center",
-				"size-5 -left-6 rounded select-none",
-				"opacity-0 group-hover:opacity-100 transition-opacity",
+				"size-5 -left-6 rounded select-none cursor-pointer",
+				"opacity-40 group-hover:opacity-100 transition-opacity",
 				isFolded && "opacity-100",
 				className,
 			)}

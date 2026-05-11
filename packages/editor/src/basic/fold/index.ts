@@ -7,7 +7,8 @@ export {
 	unfoldBlock,
 } from "./fold-kit"
 export {
+	blockHasChildren,
 	computeHidden,
-	findFoldableAncestor,
+	findFoldTarget,
 	getFoldableInfo,
 } from "./fold-utils"
