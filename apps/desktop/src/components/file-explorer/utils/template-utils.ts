@@ -19,7 +19,7 @@ export async function getTemplateFiles(
 	}
 
 	try {
-		const templatesDir = join(workspacePath, ".mdit", TEMPLATES_DIR)
+		const templatesDir = join(workspacePath, ".mindnote", TEMPLATES_DIR)
 
 		if (!(await exists(templatesDir))) {
 			return []
@@ -55,7 +55,7 @@ export async function saveNoteAsTemplate(
 		const noteContent = await readTextFile(notePath)
 
 		// Ensure templates directory exists
-		const templatesDir = join(workspacePath, ".mdit", TEMPLATES_DIR)
+		const templatesDir = join(workspacePath, ".mindnote", TEMPLATES_DIR)
 		if (!(await exists(templatesDir))) {
 			await mkdir(templatesDir, { recursive: true })
 		}

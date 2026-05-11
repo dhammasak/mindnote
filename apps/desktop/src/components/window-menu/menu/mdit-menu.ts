@@ -9,7 +9,7 @@ export async function createMditMenu({
 	hotkeys: AppHotkeyMap
 }) {
 	return await Submenu.new({
-		text: "Mdit",
+		text: "MindNote",
 		items: [
 			await PredefinedMenuItem.new({
 				text: "Services",

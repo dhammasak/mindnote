@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use thiserror::Error;
 
-pub const AI_CREDENTIALS_SERVICE: &str = "app.mdit";
+pub const AI_CREDENTIALS_SERVICE: &str = "app.mindnote";
 pub const AI_CREDENTIALS_USER: &str = "credentials";
 pub const CREDENTIAL_STORE_VERSION: u8 = 1;
 

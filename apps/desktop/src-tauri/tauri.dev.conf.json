@@ -1,5 +1,5 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "Mdit Dev",
-	"identifier": "app.mdit.dev"
+	"productName": "MindNote Dev",
+	"identifier": "app.mindnote.dev"
 }
