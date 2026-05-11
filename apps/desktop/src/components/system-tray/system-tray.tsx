@@ -14,7 +14,7 @@ const createQuickNoteWindow = () => {
 
 	new WebviewWindow(windowLabel, {
 		url: "/quick-note",
-		title: "Mdit",
+		title: "MindNote",
 		width: 800,
 		height: 600,
 		transparent: false,

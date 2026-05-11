@@ -1,8 +1,8 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "Mdit",
+	"productName": "MindNote",
 	"version": "0.8.4",
-	"identifier": "app.mdit",
+	"identifier": "app.mindnote",
 	"build": {
 		"beforeDevCommand": "pnpm dev",
 		"devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
 		"macOSPrivateApi": true,
 		"windows": [
 			{
-				"title": "Mdit",
+				"title": "MindNote",
 				"titleBarStyle": "Overlay",
 				"hiddenTitle": true,
 				"dragDropEnabled": true,

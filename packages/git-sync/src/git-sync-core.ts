@@ -252,7 +252,7 @@ export const createGitSyncCore = (ports: GitPorts): GitSyncCore => {
 	}
 
 	const ensureGitignoreEntry = async (workspacePath: string): Promise<void> => {
-		const mditDir = ports.join(workspacePath, ".mdit")
+		const mditDir = ports.join(workspacePath, ".mindnote")
 		const gitignorePath = ports.join(mditDir, ".gitignore")
 		const entries = ["db.sqlite", ".DS_Store", "workspace.json"]
 
