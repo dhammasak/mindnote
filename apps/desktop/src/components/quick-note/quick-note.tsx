@@ -2,6 +2,7 @@ import { NodeApi, usePlateEditor, type Value } from "@mdit/editor/plate"
 import { EditorSurface } from "@mdit/editor/shared"
 import { getEditorTitleText, stripEditorTitleBlock } from "@mdit/editor/title"
 import { Button } from "@mdit/ui/components/button"
+import { invoke } from "@tauri-apps/api/core"
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { save as saveDialog } from "@tauri-apps/plugin-dialog"
 import { exists, writeTextFile } from "@tauri-apps/plugin-fs"
@@ -9,7 +10,6 @@ import { join } from "pathe"
 import { useCallback, useEffect } from "react"
 import { toast } from "sonner"
 import { useLocation } from "wouter"
-import { useStore } from "@/store"
 import { isMac } from "@/utils/platform"
 import { EditorKit } from "../editor/plugins/editor-kit"
 import { WindowPinButton } from "./window-pin-button"
@@ -54,6 +54,19 @@ function buildNotePayload(
 	return { fileBase: sanitized || "Untitled", body }
 }
 
+// The Quick Note window doesn't bootstrap the full workspace lifecycle, so
+// `useStore.getState().workspacePath` is always null in this window. Ask the
+// Rust backend directly for the recent workspaces and use the most recent.
+async function loadActiveWorkspacePath(): Promise<string | null> {
+	try {
+		const paths = await invoke<string[]>("list_vault_workspaces_command")
+		return paths[0] ?? null
+	} catch (error) {
+		console.error("Failed to load workspace paths:", error)
+		return null
+	}
+}
+
 export function QuickNote() {
 	const [, navigate] = useLocation()
 	const editor = usePlateEditor({
@@ -69,69 +82,42 @@ export function QuickNote() {
 		editor.tf.focus()
 	}, [editor])
 
-	// Save without dialog, using the title block as the filename and the
-	// workspace root as the folder. Returns the saved path, or null if the
-	// note was empty (caller decides whether to close the window).
-	const saveToWorkspace = useCallback(async (): Promise<string | null> => {
-		const workspacePath = useStore.getState().workspacePath
-		if (!workspacePath) {
-			return null
-		}
-
-		const payload = buildNotePayload(
-			editor.children as Value,
-			editor.api.markdown.serialize,
-		)
-		if (!payload) {
-			return null
-		}
-
-		const filePath = await findUniquePath(workspacePath, payload.fileBase)
-		await writeTextFile(filePath, payload.body)
-		return filePath
-	}, [editor])
-
-	// Fallback when no workspace is set — show the native Save dialog.
-	const saveWithDialog = useCallback(async (): Promise<string | null> => {
-		const payload = buildNotePayload(
-			editor.children as Value,
-			editor.api.markdown.serialize,
-		)
-		if (!payload) {
-			return null
-		}
-		const chosenPath = await saveDialog({
-			title: "Save Note",
-			defaultPath: `${payload.fileBase}.md`,
-			filters: [{ name: "Markdown", extensions: ["md"] }],
-		})
-		if (!chosenPath) {
-			return null
-		}
-		await writeTextFile(chosenPath, payload.body)
-		return chosenPath
-	}, [editor])
-
 	// ⌘S: save and switch to the in-app edit view (window stays open).
 	const handleSave = useCallback(async () => {
 		try {
-			const workspacePath = useStore.getState().workspacePath
-			const savedPath = workspacePath
-				? await saveToWorkspace()
-				: await saveWithDialog()
-			if (!savedPath) return
+			const payload = buildNotePayload(
+				editor.children as Value,
+				editor.api.markdown.serialize,
+			)
+			if (!payload) return
+
+			const workspacePath = await loadActiveWorkspacePath()
+			let savedPath: string
+			if (workspacePath) {
+				savedPath = await findUniquePath(workspacePath, payload.fileBase)
+				await writeTextFile(savedPath, payload.body)
+			} else {
+				// No workspace yet — fall back to a native dialog.
+				const chosenPath = await saveDialog({
+					title: "Save Note",
+					defaultPath: `${payload.fileBase}.md`,
+					filters: [{ name: "Markdown", extensions: ["md"] }],
+				})
+				if (!chosenPath) return
+				await writeTextFile(chosenPath, payload.body)
+				savedPath = chosenPath
+			}
 			navigate(`/edit?path=${encodeURIComponent(savedPath)}`, { replace: true })
 		} catch (error) {
 			console.error("Failed to save file:", error)
 			toast.error("Failed to save file")
 		}
-	}, [navigate, saveToWorkspace, saveWithDialog])
+	}, [editor, navigate])
 
 	// Save button / ⌘Enter / Esc: save and close the Quick Note window.
 	const handleSaveAndClose = useCallback(async () => {
 		const appWindow = getCurrentWindow()
 		try {
-			const workspacePath = useStore.getState().workspacePath
 			// Empty note → close immediately without saving anything.
 			const payload = buildNotePayload(
 				editor.children as Value,
@@ -142,6 +128,7 @@ export function QuickNote() {
 				return
 			}
 
+			const workspacePath = await loadActiveWorkspacePath()
 			if (workspacePath) {
 				const filePath = await findUniquePath(workspacePath, payload.fileBase)
 				await writeTextFile(filePath, payload.body)
@@ -155,9 +142,7 @@ export function QuickNote() {
 				defaultPath: `${payload.fileBase}.md`,
 				filters: [{ name: "Markdown", extensions: ["md"] }],
 			})
-			if (!chosenPath) {
-				return
-			}
+			if (!chosenPath) return
 			await writeTextFile(chosenPath, payload.body)
 			await appWindow.close()
 		} catch (error) {
@@ -165,6 +150,31 @@ export function QuickNote() {
 			toast.error("Failed to save file")
 		}
 	}, [editor])
+
+	// Window-level capture-phase keydown handler. EditorSurface only exposes
+	// onKeyDown on the outer container, *after* Plate's editable consumes
+	// many keys (Esc, ⌘S, ⌘Enter), so we attach at window level with capture
+	// phase to catch them before Plate sees them.
+	useEffect(() => {
+		const handler = (e: KeyboardEvent) => {
+			const isMod = e.metaKey || e.ctrlKey
+			if (isMod && !e.shiftKey && !e.altKey && e.key === "Enter") {
+				e.preventDefault()
+				e.stopPropagation()
+				void handleSaveAndClose()
+			} else if (e.key === "Escape") {
+				e.preventDefault()
+				e.stopPropagation()
+				void handleSaveAndClose()
+			} else if (isMod && !e.shiftKey && !e.altKey && e.key === "s") {
+				e.preventDefault()
+				e.stopPropagation()
+				void handleSave()
+			}
+		}
+		window.addEventListener("keydown", handler, true)
+		return () => window.removeEventListener("keydown", handler, true)
+	}, [handleSave, handleSaveAndClose])
 
 	useEffect(() => {
 		const appWindow = getCurrentWindow()
@@ -186,21 +196,7 @@ export function QuickNote() {
 				<WindowPinButton />
 			</div>
 			<div className="flex-1 min-h-0 overflow-auto">
-				<EditorSurface
-					editor={editor}
-					onKeyDown={(e) => {
-						if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-							e.preventDefault()
-							void handleSave()
-						} else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-							e.preventDefault()
-							void handleSaveAndClose()
-						} else if (e.key === "Escape") {
-							e.preventDefault()
-							void handleSaveAndClose()
-						}
-					}}
-				/>
+				<EditorSurface editor={editor} />
 			</div>
 			<div className="shrink-0 flex items-center justify-end px-3 py-2 border-t border-border/50">
 				<Button
