@@ -20,11 +20,10 @@ export function getFoldableInfo(block: {
 	if (block.type && HEADING_TYPES[block.type] !== undefined) {
 		return { kind: "heading", level: HEADING_TYPES[block.type] }
 	}
-	const indent = block.indent ?? 0
-	if (indent > 0) {
-		return { kind: "indent", indent }
-	}
-	return null
+	// Any non-heading block is potentially foldable on the indent axis.
+	// Whether a *chevron* shows up is decided separately by blockHasChildren —
+	// indent=0 blocks fold only when they actually own indented content below.
+	return { kind: "indent", indent: block.indent ?? 0 }
 }
 
 type ActiveFold = { id: string } & FoldableInfo
