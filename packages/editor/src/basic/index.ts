@@ -1,4 +1,12 @@
 export { BasicBlocksKit } from "./basic-blocks-kit"
+export {
+	FoldChevron,
+	FoldKit,
+	FoldPlugin,
+	foldBlock,
+	toggleFoldBlock,
+	unfoldBlock,
+} from "./fold"
 export { IndentKit } from "./indent-kit"
 export { ListKit } from "./list-kit"
 export { BlockquoteElement } from "./node-blockquote"

@@ -10,10 +10,30 @@ import { KEYS } from "platejs"
 import {
 	type PlateElementProps,
 	type RenderNodeWrapper,
+	useEditorSelector,
 	useReadOnly,
 } from "platejs/react"
 import { useCallback } from "react"
+import { FoldChevron } from "./fold"
 import { resolveListStyleTypeByIndent } from "./list-style-utils"
+
+function useListItemHasChildren(
+	path: readonly number[],
+	indent: number,
+): boolean {
+	const topLevelIdx = path[0]
+	return useEditorSelector(
+		(editor) => {
+			if (typeof topLevelIdx !== "number") return false
+			const next = editor.children[topLevelIdx + 1] as
+				| { indent?: number }
+				| undefined
+			if (!next) return false
+			return (next.indent ?? 0) > indent
+		},
+		[topLevelIdx, indent],
+	)
+}
 
 const config: Record<
 	string,
@@ -52,7 +72,7 @@ function List(props: PlateElementProps) {
 			start={listStart}
 		>
 			{Marker && <Marker {...props} />}
-			{Li ? <Li {...props} /> : <li>{props.children}</li>}
+			{Li ? <Li {...props} /> : <DefaultLi {...props} />}
 		</List>
 	)
 }
@@ -86,14 +106,43 @@ function TodoMarker(props: PlateElementProps) {
 }
 
 function TodoLi(props: PlateElementProps) {
+	const indent = ((props.element as { indent?: number }).indent ?? 0) as number
+	const elementId =
+		typeof props.element.id === "string" ? props.element.id : undefined
+	const hasChildren = useListItemHasChildren(props.path, indent)
 	return (
 		<li
 			className={cn(
 				"list-none",
+				"mn-list-item group",
 				(props.element.checked as boolean) &&
 					"text-muted-foreground line-through",
 			)}
+			data-indent={indent}
+			style={{ "--mn-indent": indent } as React.CSSProperties}
 		>
+			{elementId && hasChildren && (
+				<FoldChevron elementId={elementId} className="-left-9" />
+			)}
+			{props.children}
+		</li>
+	)
+}
+
+function DefaultLi(props: PlateElementProps) {
+	const indent = ((props.element as { indent?: number }).indent ?? 0) as number
+	const elementId =
+		typeof props.element.id === "string" ? props.element.id : undefined
+	const hasChildren = useListItemHasChildren(props.path, indent)
+	return (
+		<li
+			className="mn-list-item group"
+			data-indent={indent}
+			style={{ "--mn-indent": indent } as React.CSSProperties}
+		>
+			{elementId && hasChildren && (
+				<FoldChevron elementId={elementId} className="-left-9" />
+			)}
 			{props.children}
 		</li>
 	)

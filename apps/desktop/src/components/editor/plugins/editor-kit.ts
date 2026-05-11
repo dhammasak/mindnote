@@ -1,6 +1,7 @@
 import { createAIKit } from "@mdit/editor/ai"
 import {
 	BasicBlocksKit,
+	FoldKit,
 	ListKit,
 	ShortcutsKit,
 	UtilsKit,
@@ -83,6 +84,7 @@ export const createEditorKit = ({
 		...DateKit,
 		...DndKit,
 		...FloatingToolbarKit,
+		...FoldKit,
 		...createLinkKit({ services: desktopLinkServices }),
 		...ListKit,
 		...(mdx ? MarkdownKit : MarkdownKitNoMdx),
