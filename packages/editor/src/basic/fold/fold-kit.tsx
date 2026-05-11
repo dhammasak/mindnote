@@ -1,6 +1,6 @@
 import type { PlateEditor } from "platejs/react"
 import { createPlatePlugin, type RenderNodeWrapper } from "platejs/react"
-import { findFoldableAncestor, getFoldableInfo } from "./fold-utils"
+import { findFoldTarget } from "./fold-utils"
 import { FoldWrapper } from "./fold-wrapper"
 
 export type FoldPluginOptions = {
@@ -9,36 +9,28 @@ export type FoldPluginOptions = {
 
 type BlockLike = { id?: unknown; type?: unknown; indent?: unknown }
 
-function readBlocks(editor: PlateEditor): BlockLike[] {
-	return editor.children as BlockLike[]
-}
-
-function resolveFoldTargetId(
-	blocks: BlockLike[],
-	path: readonly number[],
-): string | null {
-	if (path.length === 0) return null
-	const idx = path[0] as number
-	if (idx < 0 || idx >= blocks.length) return null
-
-	const self = blocks[idx]!
-	const summary = {
-		type: typeof self.type === "string" ? self.type : undefined,
-		indent: typeof self.indent === "number" ? self.indent : undefined,
-	}
-
-	if (getFoldableInfo(summary)) {
-		return typeof self.id === "string" ? self.id : null
-	}
-
-	const summaries = blocks.map((b) => ({
+function readBlockSummaries(editor: PlateEditor): Array<{
+	id?: string
+	type?: string
+	indent?: number
+}> {
+	return (editor.children as BlockLike[]).map((b) => ({
 		id: typeof b.id === "string" ? b.id : undefined,
 		type: typeof b.type === "string" ? b.type : undefined,
 		indent: typeof b.indent === "number" ? b.indent : undefined,
 	}))
-	const ancestorIdx = findFoldableAncestor(summaries, idx)
-	if (ancestorIdx === null) return null
-	return summaries[ancestorIdx]?.id ?? null
+}
+
+function resolveFoldTargetId(
+	editor: PlateEditor,
+	path: readonly number[],
+): string | null {
+	if (path.length === 0) return null
+	const idx = path[0] as number
+	const summaries = readBlockSummaries(editor)
+	const targetIdx = findFoldTarget(summaries, idx)
+	if (targetIdx === null) return null
+	return summaries[targetIdx]?.id ?? null
 }
 
 const foldAboveNodes: RenderNodeWrapper = (props) => {
@@ -56,37 +48,35 @@ export const FoldPlugin = createPlatePlugin({
 		aboveNodes: foldAboveNodes,
 	},
 	shortcuts: {
-		foldMore: {
+		foldToggleDown: {
 			keys: "mod+arrowdown",
 			handler: ({ editor, event }) => {
 				const selection = editor.selection
 				if (!selection) return false
-				const blocks = readBlocks(editor)
-				const target = resolveFoldTargetId(blocks, selection.anchor.path)
+				const target = resolveFoldTargetId(editor, selection.anchor.path)
 				if (!target) return false
-				const current = editor.getOption(FoldPlugin, "foldedIds")
-				if (current.includes(target)) return false
 				event?.preventDefault?.()
-				editor.setOption(FoldPlugin, "foldedIds", [...current, target])
+				const current = editor.getOption(FoldPlugin, "foldedIds")
+				const next = current.includes(target)
+					? current.filter((x) => x !== target)
+					: [...current, target]
+				editor.setOption(FoldPlugin, "foldedIds", next)
 				return true
 			},
 		},
-		foldLess: {
+		foldToggleUp: {
 			keys: "mod+arrowup",
 			handler: ({ editor, event }) => {
 				const selection = editor.selection
 				if (!selection) return false
-				const blocks = readBlocks(editor)
-				const target = resolveFoldTargetId(blocks, selection.anchor.path)
+				const target = resolveFoldTargetId(editor, selection.anchor.path)
 				if (!target) return false
-				const current = editor.getOption(FoldPlugin, "foldedIds")
-				if (!current.includes(target)) return false
 				event?.preventDefault?.()
-				editor.setOption(
-					FoldPlugin,
-					"foldedIds",
-					current.filter((x) => x !== target),
-				)
+				const current = editor.getOption(FoldPlugin, "foldedIds")
+				const next = current.includes(target)
+					? current.filter((x) => x !== target)
+					: [...current, target]
+				editor.setOption(FoldPlugin, "foldedIds", next)
 				return true
 			},
 		},

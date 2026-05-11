@@ -122,7 +122,7 @@ function TodoLi(props: PlateElementProps) {
 			style={{ "--mn-indent": indent } as React.CSSProperties}
 		>
 			{elementId && hasChildren && (
-				<FoldChevron elementId={elementId} className="-left-9" />
+				<FoldChevron elementId={elementId} className="-left-10" />
 			)}
 			{props.children}
 		</li>
@@ -141,7 +141,7 @@ function DefaultLi(props: PlateElementProps) {
 			style={{ "--mn-indent": indent } as React.CSSProperties}
 		>
 			{elementId && hasChildren && (
-				<FoldChevron elementId={elementId} className="-left-9" />
+				<FoldChevron elementId={elementId} className="-left-10" />
 			)}
 			{props.children}
 		</li>

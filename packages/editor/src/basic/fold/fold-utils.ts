@@ -85,15 +85,51 @@ export function computeHidden(
 	return hidden
 }
 
-// Find the closest foldable ancestor of a block at index `idx`.
-// "Ancestor" here means: a heading above that contains this block in its fold scope,
-// or an indented block above with smaller indent than this block.
-// Returns the index of the foldable block, or null if none.
-export function findFoldableAncestor(
+// True if `blocks[idx]` has at least one block "under" it in fold semantics:
+//  - For a heading at level L, any subsequent block before the next H<=L counts.
+//  - For an indented block at indent I, any subsequent block with indent > I
+//    (before the next heading or any block with indent <= I) counts.
+export function blockHasChildren(
+	blocks: Array<{ id?: string; type?: string; indent?: number }>,
+	idx: number,
+): boolean {
+	if (idx < 0 || idx >= blocks.length) return false
+	const self = blocks[idx]!
+	const info = getFoldableInfo(self)
+	if (!info) return false
+
+	const next = blocks[idx + 1]
+	if (!next) return false
+
+	if (info.kind === "heading") {
+		const nextHeading =
+			next.type && HEADING_TYPES[next.type] !== undefined
+				? HEADING_TYPES[next.type]
+				: null
+		return nextHeading === null || nextHeading > info.level
+	}
+	// info.kind === "indent": children must have greater indent and not be a
+	// heading (headings reset the indent scope).
+	const nextIndent = next.indent ?? 0
+	const isHeading = next.type && HEADING_TYPES[next.type] !== undefined
+	if (isHeading) return false
+	return nextIndent > info.indent
+}
+
+// Find the closest block at or above `idx` that is foldable AND has children
+// to fold. Returns its index, or null if no such block exists in scope.
+// "In scope" follows the same exit rules as fold visibility.
+export function findFoldTarget(
 	blocks: Array<{ id?: string; type?: string; indent?: number }>,
 	idx: number,
 ): number | null {
 	if (idx < 0 || idx >= blocks.length) return null
+
+	// First, check the block itself.
+	if (blockHasChildren(blocks, idx)) {
+		return idx
+	}
+
 	const self = blocks[idx]!
 	const selfIndent = self.indent ?? 0
 	const selfHeading =
@@ -107,19 +143,18 @@ export function findFoldableAncestor(
 		if (!candidateInfo) continue
 
 		if (candidateInfo.kind === "heading") {
-			// A heading is an ancestor of self if self is not also a heading
-			// of same/lower level. (Otherwise self is a sibling/parent.)
+			// If self is a heading of same or higher importance, this candidate
+			// is not an ancestor.
 			if (selfHeading !== null && selfHeading <= candidateInfo.level) {
 				continue
 			}
-			return i
+			if (blockHasChildren(blocks, i)) return i
+			continue
 		}
 
-		// candidateInfo.kind === "indent"
-		// If we cross a heading above us, the indent ancestor is invalidated.
-		// (handled by continuing past)
+		// indent ancestor: must be strictly less indented than self.
 		if (candidateInfo.indent < selfIndent) {
-			return i
+			if (blockHasChildren(blocks, i)) return i
 		}
 	}
 	return null
