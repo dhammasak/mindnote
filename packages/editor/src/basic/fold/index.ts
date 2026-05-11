@@ -1,5 +1,4 @@
 export { FoldChevron } from "./fold-chevron"
-export { useBlockHasChildren } from "./use-has-children"
 export {
 	FoldKit,
 	FoldPlugin,
@@ -13,3 +12,4 @@ export {
 	findFoldTarget,
 	getFoldableInfo,
 } from "./fold-utils"
+export { useBlockHasChildren } from "./use-has-children"
