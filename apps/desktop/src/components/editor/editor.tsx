@@ -266,13 +266,22 @@ function EditorContent({
 			)
 
 			if (renamedPath === document.path) {
-				toast.error("Failed to rename note.")
+				// renameEntry silently returns the source path when the target
+				// already exists (or the entry is locked). The most common reason
+				// hit from the editor's title-rename flow is a duplicate filename,
+				// so make the message specific. Toast id dedupes — repeated saves
+				// while the title still conflicts won't stack multiple toasts.
+				toast.error(
+					`Couldn't rename note to "${rawTitle}" — a note with that title may already exist in this folder.`,
+					{ id: "editor-rename-from-title-failed" },
+				)
 			}
 
 			return renamedPath
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to rename note.",
+				{ id: "editor-rename-from-title-failed" },
 			)
 			return document.path
 		}
