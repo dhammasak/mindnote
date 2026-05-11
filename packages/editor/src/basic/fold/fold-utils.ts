@@ -34,7 +34,10 @@ type ActiveFold = { id: string } & FoldableInfo
 //  - active fold is an indent at level I, current block has indent <= I AND is not
 //    a strictly deeper continuation. We also exit on any heading regardless of
 //    indent (headings reset the indent fold scope).
-function exits(active: ActiveFold, block: { type?: string; indent?: number }): boolean {
+function exits(
+	active: ActiveFold,
+	block: { type?: string; indent?: number },
+): boolean {
 	const blockIndent = block.indent ?? 0
 	const blockHeading =
 		block.type && HEADING_TYPES[block.type] !== undefined

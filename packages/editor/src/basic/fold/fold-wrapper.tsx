@@ -5,12 +5,14 @@ import {
 	usePluginOption,
 } from "platejs/react"
 import { useMemo } from "react"
-import { computeHidden } from "./fold-utils"
 import { FoldPlugin } from "./fold-kit"
+import { computeHidden } from "./fold-utils"
 
 type BlockSummary = { id?: string; type?: string; indent?: number }
 
-function summariseBlocks(children: readonly { id?: unknown; type?: unknown; indent?: unknown }[]): BlockSummary[] {
+function summariseBlocks(
+	children: readonly { id?: unknown; type?: unknown; indent?: unknown }[],
+): BlockSummary[] {
 	return children.map((c) => ({
 		id: typeof c.id === "string" ? c.id : undefined,
 		type: typeof c.type === "string" ? c.type : undefined,
