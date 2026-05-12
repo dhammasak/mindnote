@@ -19,7 +19,8 @@
 		"lint": "biome check .",
 		"lint:fix": "biome check . --write",
 		"ci": "pnpm lint && turbo run ts:check test --continue",
-		"prepare": "husky"
+		"prepare": "husky",
+		"release": "bash scripts/release.sh"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.2",
