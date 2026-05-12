@@ -4,6 +4,7 @@ import {
 	FoldKit,
 	ListKit,
 	ShortcutsKit,
+	TodoCycleKit,
 	UtilsKit,
 } from "@mdit/editor/basic"
 import { CalloutKit } from "@mdit/editor/callout"
@@ -91,6 +92,7 @@ export const createEditorKit = ({
 		...MathKit,
 		...createMediaKit({ host: desktopMediaHost }),
 		...ShortcutsKit,
+		...TodoCycleKit,
 		...createSlashKit({ host: desktopSlashHost }),
 		...SuggestionKit,
 		...createTagKit({ host: desktopTagHost }),
