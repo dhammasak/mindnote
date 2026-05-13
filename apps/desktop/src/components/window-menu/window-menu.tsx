@@ -7,9 +7,6 @@ import { installWindowMenu } from "./menu"
 
 export function WindowMenu() {
 	const {
-		activeTabId,
-		isEditMode,
-		closeActiveTab,
 		openFolderPicker,
 		activatePreviousTab,
 		activateNextTab,
@@ -19,9 +16,6 @@ export function WindowMenu() {
 		goForward,
 	} = useStore(
 		useShallow((s) => ({
-			activeTabId: s.activeTabId,
-			isEditMode: s.isEditMode,
-			closeActiveTab: s.closeActiveTab,
 			openFolderPicker: s.openFolderPicker,
 			activatePreviousTab: s.activatePreviousTab,
 			activateNextTab: s.activateNextTab,
@@ -32,13 +26,19 @@ export function WindowMenu() {
 		})),
 	)
 
+	// Read isEditMode + activeTabId from the store at call time rather than
+	// from props captured here, so the macOS menu accelerator (⌘W) always
+	// sees the current value. Otherwise the first menu install can happen
+	// before EditNote sets isEditMode=true, leaving the first ⌘W press
+	// closing the tab instead of the window.
 	const handleCloseTab = useCallback(() => {
+		const state = useStore.getState()
 		void closeTabOrHideWindow({
-			isEditMode,
-			hasActiveTab: activeTabId !== null,
-			closeActiveTab,
+			isEditMode: state.isEditMode,
+			hasActiveTab: state.activeTabId !== null,
+			closeActiveTab: state.closeActiveTab,
 		})
-	}, [activeTabId, closeActiveTab, isEditMode])
+	}, [])
 
 	const {
 		toggleFileExplorer,

@@ -39,9 +39,6 @@ export function getTabIdForNumberShortcut<T extends { id: number }>(
 export function Hotkeys() {
 	const {
 		hotkeys,
-		activeTabId,
-		isEditMode,
-		closeActiveTab,
 		openFolderPicker,
 		activateTabById,
 		activatePreviousTab,
@@ -64,9 +61,6 @@ export function Hotkeys() {
 	} = useStore(
 		useShallow((s) => ({
 			hotkeys: s.hotkeys,
-			activeTabId: s.activeTabId,
-			isEditMode: s.isEditMode,
-			closeActiveTab: s.closeActiveTab,
 			openFolderPicker: s.openFolderPicker,
 			activateTabById: s.activateTabById,
 			activatePreviousTab: s.activatePreviousTab,
@@ -89,13 +83,16 @@ export function Hotkeys() {
 		})),
 	)
 
+	// Read isEditMode + activeTabId from the store at call time so the
+	// shortcut always sees the current value (see WindowMenu comment).
 	const handleCloseTab = useCallback(() => {
+		const state = useStore.getState()
 		void closeTabOrHideWindow({
-			isEditMode,
-			hasActiveTab: activeTabId !== null,
-			closeActiveTab,
+			isEditMode: state.isEditMode,
+			hasActiveTab: state.activeTabId !== null,
+			closeActiveTab: state.closeActiveTab,
 		})
-	}, [activeTabId, closeActiveTab, isEditMode])
+	}, [])
 
 	const handleActivateTabByNumber = useCallback(
 		(digit: number) => {
