@@ -90,6 +90,9 @@ fn open_edit_window(app_handle: &tauri::AppHandle, file_path: &str) {
         config.url = tauri::WebviewUrl::App(url.into());
         config.transparent = false;
         config.window_effects = None;
+        // Open edit windows maximized so opening a .md file from Finder lands
+        // on a full-size window, matching the main window's default.
+        config.maximized = true;
 
         tauri::WebviewWindowBuilder::from_config(app_handle, &config)
             .ok()?
