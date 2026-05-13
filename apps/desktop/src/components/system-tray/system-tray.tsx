@@ -7,6 +7,20 @@ import { WebviewWindow } from "@tauri-apps/api/webviewWindow"
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut"
 import { join } from "pathe"
 import { useEffect } from "react"
+import { runManualUpdateCheck } from "@/hooks/use-update-check"
+import { createNoteInDefaultFolder } from "@/lib/note-creation"
+import { useStore } from "@/store"
+
+async function focusMainWindow(): Promise<void> {
+	const main = await WebviewWindow.getByLabel("main")
+	if (!main) return
+	try {
+		await main.show()
+		await main.setFocus()
+	} catch {
+		// Tauri sometimes throws when the window is already focused — ignore.
+	}
+}
 
 const createQuickNoteWindow = () => {
 	// Generate a unique window label to allow multiple quick-note windows.
@@ -41,12 +55,39 @@ async function createSystemTray() {
 		menu: await Menu.new({
 			items: [
 				{
+					id: "New Note",
+					text: "New Note",
+					action: async () => {
+						await focusMainWindow()
+						await createNoteInDefaultFolder()
+					},
+				},
+				{
 					id: "Quick Note",
 					text: "Quick Note",
 					action: () => {
 						createQuickNoteWindow()
 					},
 					accelerator: "CmdOrCtrl+Shift+N",
+				},
+				await PredefinedMenuItem.new({
+					item: "Separator",
+				}),
+				{
+					id: "Settings",
+					text: "Settings…",
+					action: async () => {
+						await focusMainWindow()
+						useStore.getState().toggleSettingsDialogOpen()
+					},
+				},
+				{
+					id: "Check for Update",
+					text: "Check for Update…",
+					action: async () => {
+						await focusMainWindow()
+						await runManualUpdateCheck()
+					},
 				},
 				await PredefinedMenuItem.new({
 					item: "Separator",
