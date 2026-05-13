@@ -39,5 +39,9 @@ export {
 	ShortcutsPlugin,
 	selectAllLikeCmdA,
 } from "./shortcuts-kit"
+export {
+	MoveBlockShortcutsKit,
+	MoveBlockShortcutsPlugin,
+} from "./move-block-shortcuts-kit"
 export { TodoCycleKit, TodoCyclePlugin } from "./todo-cycle-kit"
 export { UtilsKit } from "./utils-kit"
