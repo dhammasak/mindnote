@@ -9,6 +9,12 @@ pub struct AppState {
     pub opened_files: Mutex<Vec<String>>,
     pub suppress_next_main_show: Mutex<bool>,
     pub next_edit_window_id: Mutex<u64>,
+    /// True when MindNote was launched purely to open one or more .md files
+    /// (via Finder "Open With" / file association). The window lifecycle uses
+    /// this to (1) skip creating the main window shell entirely and (2) quit
+    /// the app when the last edit window is destroyed, so the user gets a
+    /// single close = single exit experience.
+    pub launched_for_file_open: Mutex<bool>,
 }
 
 impl AppState {
