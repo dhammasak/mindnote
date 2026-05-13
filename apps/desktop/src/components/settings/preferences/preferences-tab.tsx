@@ -49,13 +49,13 @@ export function PreferencesTab() {
 		<div className="flex-1 overflow-y-auto p-12">
 			<FieldSet>
 				<FieldLegend>Preferences</FieldLegend>
-				<FieldDescription>Customize your Mdit experience</FieldDescription>
+				<FieldDescription>Customize your MindNote experience</FieldDescription>
 				<FieldGroup>
 					<Field orientation="horizontal">
 						<FieldContent>
 							<FieldLabel>Appearance</FieldLabel>
 							<FieldDescription>
-								Choose how you want Mdit to look
+								Choose how you want MindNote to look
 							</FieldDescription>
 						</FieldContent>
 						<Select
