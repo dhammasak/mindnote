@@ -350,8 +350,16 @@ function EditorContent({
 		const closeListener = appWindow.listen(
 			"tauri://close-requested",
 			async () => {
-				const didSave = await handleSave("exit")
-				if (destroyOnClose && didSave) {
+				try {
+					await handleSave("exit")
+				} catch (error) {
+					console.error("Save on close failed:", error)
+				}
+				if (destroyOnClose) {
+					// In edit-window mode (Finder Open With), always destroy
+					// regardless of save outcome. Gating on didSave caused ⌘W via
+					// the macOS menu accelerator to leave the window open when the
+					// save raced or returned false, forcing the user to close twice.
 					appWindow.destroy()
 				}
 			},
