@@ -131,14 +131,28 @@ pub fn handle_opened_event(app_handle: &tauri::AppHandle, urls: Vec<tauri::Url>)
         return;
     }
 
-    {
-        let state = app_handle.state::<AppState>();
-        let mut opened_files = state.opened_files.lock().unwrap();
-        *opened_files = file_paths.clone();
-        drop(opened_files);
-        state.mark_suppress_next_main_show();
-        open_edit_windows(app_handle, &file_paths);
+    let state = app_handle.state::<AppState>();
+    let mut opened_files = state.opened_files.lock().unwrap();
+    *opened_files = file_paths.clone();
+    drop(opened_files);
+    state.mark_suppress_next_main_show();
+
+    // If the main window is still hidden when this fires, MindNote was
+    // launched specifically to open these files (vs. dispatching to an already
+    // running session with a vault open). Tear the main window down entirely
+    // so there's no orphan shell to surface later, and remember the mode so
+    // the lifecycle handler can quit the app when the last edit window closes.
+    if let Some(main_window) = app_handle.get_webview_window("main") {
+        let main_visible = main_window.is_visible().unwrap_or(false);
+        if !main_visible {
+            if let Ok(mut flag) = state.launched_for_file_open.lock() {
+                *flag = true;
+            }
+            let _ = main_window.destroy();
+        }
     }
+
+    open_edit_windows(app_handle, &file_paths);
 }
 
 /// Opens the edit window if there are files in opened_files (for non-macOS platforms).

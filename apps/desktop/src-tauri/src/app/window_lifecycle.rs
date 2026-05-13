@@ -80,13 +80,17 @@ pub fn handle_run_event(app_handle: &tauri::AppHandle, event: &tauri::RunEvent) 
             if let Some(main_window) = app_handle.get_webview_window("main") {
                 let app_state = app_handle.state::<file_opening::AppState>();
                 if opened_files_present(&app_state) {
-                    // App was launched purely to open one or more .md files.
-                    // Tear down the main window so there's no hidden shell to
-                    // surface later, and remember this mode so we can quit when
-                    // the last edit window closes.
+                    // CLI args carried file paths (non-macOS launch with .md
+                    // files). Tear down the main shell up front and remember
+                    // the mode so we can quit when the last edit window closes.
                     mark_launched_for_file_open(&app_state);
                     let _ = main_window.destroy();
                 } else {
+                    // On macOS the file URLs arrive in RunEvent::Opened, which
+                    // fires after Ready — opened_files is still empty here.
+                    // file_opening::handle_opened_event handles destroy + flag
+                    // for that path. For normal launch we just hide so the
+                    // empty shell isn't visible.
                     let _ = main_window.hide();
                 }
             }
