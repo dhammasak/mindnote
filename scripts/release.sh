@@ -64,9 +64,14 @@ if [ "$NEW_VERSION" != "$CURRENT_VERSION" ]; then
 fi
 
 # --- Build the DMG -------------------------------------------------------
+# CI=true tells Tauri's bundle_dmg.sh to skip the AppleScript step that sets
+# the DMG window's icon positions and view style. That step needs interactive
+# Finder access (System Settings -> Privacy -> Automation), which fails in
+# most build contexts. The resulting DMG looks plainer (no custom layout) but
+# functions identically for the drag-to-Applications install flow.
 echo ""
 echo "==> Building release DMG (this takes 3-8 minutes for a clean build)..."
-pnpm -C apps/desktop tauri build
+CI=true pnpm -C apps/desktop tauri build
 
 # --- Locate the produced DMG --------------------------------------------
 DMG_SRC=$(find target/release/bundle/dmg -name "*.dmg" -type f -print0 | xargs -0 ls -t 2>/dev/null | head -n 1 || true)
