@@ -20,6 +20,7 @@ import { useMemo } from "react"
 import { useShallow } from "zustand/shallow"
 import { HotkeyKbd } from "@/components/hotkeys/hotkey-kbd"
 import { useTheme } from "@/contexts/theme-context"
+import { useAutostart } from "@/hooks/use-autostart"
 import {
 	FONT_SCALE_STEP,
 	MAX_FONT_SCALE,
@@ -75,6 +76,12 @@ export function PreferencesTab() {
 		return exact ? exact.value : 1
 	}, [fontScale, fontScaleOptions])
 
+	const {
+		enabled: autostartEnabled,
+		isLoading: autostartLoading,
+		setEnabled: setAutostartEnabled,
+	} = useAutostart()
+
 	const themeOptions: Array<{
 		value: "light" | "dark" | "system"
 		label: string
@@ -120,6 +127,23 @@ export function PreferencesTab() {
 
 					<Field orientation="horizontal">
 						<FieldContent>
+							<FieldLabel>Open at Login</FieldLabel>
+							<FieldDescription>
+								Launch MindNote automatically when you sign in to your Mac.
+								Enabled by default on first install.
+							</FieldDescription>
+						</FieldContent>
+						<Switch
+							checked={autostartEnabled}
+							disabled={autostartLoading}
+							onCheckedChange={(next) => {
+								void setAutostartEnabled(next)
+							}}
+						/>
+					</Field>
+
+					<Field orientation="horizontal">
+						<FieldContent>
 							<FieldLabel>Font size</FieldLabel>
 							<FieldDescription>
 								Scales the editor font and line height. Default is 100%.{" "}
@@ -149,10 +173,7 @@ export function PreferencesTab() {
 							</SelectTrigger>
 							<SelectContent align="end">
 								{fontScaleOptions.map((option) => (
-									<SelectItem
-										key={option.value}
-										value={String(option.value)}
-									>
+									<SelectItem key={option.value} value={String(option.value)}>
 										{option.label}
 									</SelectItem>
 								))}
