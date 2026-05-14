@@ -22,6 +22,7 @@ import { toast } from "sonner"
 import { useShallow } from "zustand/shallow"
 import { useStore } from "@/store"
 import { isMac } from "@/utils/platform"
+import { RecentNotes } from "../recent-notes/recent-notes"
 import { Header } from "./header/header"
 import { useCommandMenuSelectionRestore } from "./hooks/use-command-menu-selection-restore"
 import { useExternalImageDrop } from "./hooks/use-external-image-drop"
@@ -69,10 +70,14 @@ export function Editor({ destroyOnClose }: { destroyOnClose?: boolean }) {
 				<Header hideNavigation={destroyOnClose} />
 				<div className="relative min-h-0 flex-1">
 					<div className="h-full bg-background">
-						<div
-							className="h-full w-full"
-							{...(isMac() && { "data-tauri-drag-region": "" })}
-						/>
+						{destroyOnClose ? (
+							<div
+								className="h-full w-full"
+								{...(isMac() && { "data-tauri-drag-region": "" })}
+							/>
+						) : (
+							<RecentNotes />
+						)}
 					</div>
 				</div>
 			</div>

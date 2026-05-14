@@ -9,6 +9,10 @@ export {
 } from "./fold"
 export { IndentKit } from "./indent-kit"
 export { ListKit } from "./list-kit"
+export {
+	MoveBlockShortcutsKit,
+	MoveBlockShortcutsPlugin,
+} from "./move-block-shortcuts-kit"
 export { BlockquoteElement } from "./node-blockquote"
 export {
 	DIFF_STYLES,
@@ -39,9 +43,5 @@ export {
 	ShortcutsPlugin,
 	selectAllLikeCmdA,
 } from "./shortcuts-kit"
-export {
-	MoveBlockShortcutsKit,
-	MoveBlockShortcutsPlugin,
-} from "./move-block-shortcuts-kit"
 export { TodoCycleKit, TodoCyclePlugin } from "./todo-cycle-kit"
 export { UtilsKit } from "./utils-kit"
