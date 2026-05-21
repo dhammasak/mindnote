@@ -56,7 +56,10 @@
 				"contentTypes": ["net.daringfireball.markdown"]
 			}
 		],
-		"resources": ["icons/trayTemplate.png"]
+		"resources": ["icons/trayTemplate.png"],
+		"macOS": {
+			"signingIdentity": "-"
+		}
 	},
 	"plugins": {
 		"updater": {
