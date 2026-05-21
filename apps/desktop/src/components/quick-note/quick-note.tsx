@@ -2,18 +2,50 @@ import { NodeApi, usePlateEditor, type Value } from "@mdit/editor/plate"
 import { EditorSurface } from "@mdit/editor/shared"
 import { getEditorTitleText, stripEditorTitleBlock } from "@mdit/editor/title"
 import { Button } from "@mdit/ui/components/button"
+import { cn } from "@mdit/ui/lib/utils"
 import { invoke } from "@tauri-apps/api/core"
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { save as saveDialog } from "@tauri-apps/plugin-dialog"
 import { exists, mkdir, writeTextFile } from "@tauri-apps/plugin-fs"
 import { join } from "pathe"
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useLocation } from "wouter"
-import { DEFAULT_NEW_NOTE_SUBFOLDER } from "@/lib/note-creation"
 import { isMac } from "@/utils/platform"
 import { EditorKit } from "../editor/plugins/editor-kit"
 import { WindowPinButton } from "./window-pin-button"
+
+// Vault-root subfolders that Quick Note can target. The first one is the
+// default selection. Add or rename freely — values must match real folder
+// names inside the user's Obsidian vault.
+const QUICK_NOTE_FOLDERS = [
+	"MindNote",
+	"Google Keep",
+	"inbox",
+	"Clippings",
+] as const
+type QuickNoteFolder = (typeof QUICK_NOTE_FOLDERS)[number]
+const DEFAULT_QUICK_NOTE_FOLDER: QuickNoteFolder = "MindNote"
+const QUICK_NOTE_FOLDER_KEY = "mindnote.quickNote.saveFolder"
+
+function isQuickNoteFolder(value: unknown): value is QuickNoteFolder {
+	return (
+		typeof value === "string" &&
+		(QUICK_NOTE_FOLDERS as readonly string[]).includes(value)
+	)
+}
+
+function loadInitialFolderSelection(): QuickNoteFolder {
+	try {
+		const stored = localStorage.getItem(QUICK_NOTE_FOLDER_KEY)
+		if (isQuickNoteFolder(stored)) {
+			return stored
+		}
+	} catch {
+		// localStorage unavailable — fall through to default.
+	}
+	return DEFAULT_QUICK_NOTE_FOLDER
+}
 
 // Strip filesystem-unsafe chars and clamp to a sane length.
 function sanitizeFilename(name: string): string {
@@ -68,12 +100,12 @@ async function loadActiveWorkspacePath(): Promise<string | null> {
 	}
 }
 
-// Resolve the default save folder for new Quick Notes: <workspace>/MindNote/.
-// Creates the subfolder on first use. Returns null when no workspace is set.
-async function resolveDefaultSaveDir(): Promise<string | null> {
+// Resolve `<workspace>/<subfolder>/`, creating the subfolder if it doesn't
+// exist yet. Returns null when no workspace is set.
+async function resolveSaveDir(subfolder: string): Promise<string | null> {
 	const workspacePath = await loadActiveWorkspacePath()
 	if (!workspacePath) return null
-	const targetDir = join(workspacePath, DEFAULT_NEW_NOTE_SUBFOLDER)
+	const targetDir = join(workspacePath, subfolder)
 	if (!(await exists(targetDir))) {
 		await mkdir(targetDir, { recursive: true })
 	}
@@ -91,6 +123,26 @@ export function QuickNote() {
 		plugins: EditorKit,
 	})
 
+	const [selectedFolder, setSelectedFolderState] = useState<QuickNoteFolder>(
+		loadInitialFolderSelection,
+	)
+	// Mirror the selection into a ref so the save callbacks (and the
+	// window-level keydown listener that depends on them) don't have to be
+	// recreated every time the user clicks a different folder button.
+	const selectedFolderRef = useRef(selectedFolder)
+	useEffect(() => {
+		selectedFolderRef.current = selectedFolder
+	}, [selectedFolder])
+
+	const selectFolder = useCallback((folder: QuickNoteFolder) => {
+		setSelectedFolderState(folder)
+		try {
+			localStorage.setItem(QUICK_NOTE_FOLDER_KEY, folder)
+		} catch {
+			// non-fatal; selection still applies for this window
+		}
+	}, [])
+
 	useEffect(() => {
 		editor.tf.focus()
 	}, [editor])
@@ -104,7 +156,7 @@ export function QuickNote() {
 			)
 			if (!payload) return
 
-			const targetDir = await resolveDefaultSaveDir()
+			const targetDir = await resolveSaveDir(selectedFolderRef.current)
 			let savedPath: string
 			if (targetDir) {
 				savedPath = await findUniquePath(targetDir, payload.fileBase)
@@ -141,7 +193,7 @@ export function QuickNote() {
 				return
 			}
 
-			const targetDir = await resolveDefaultSaveDir()
+			const targetDir = await resolveSaveDir(selectedFolderRef.current)
 			if (targetDir) {
 				const filePath = await findUniquePath(targetDir, payload.fileBase)
 				await writeTextFile(filePath, payload.body)
@@ -211,10 +263,36 @@ export function QuickNote() {
 			<div className="flex-1 min-h-0 overflow-auto">
 				<EditorSurface editor={editor} />
 			</div>
-			<div className="shrink-0 flex items-center justify-end px-3 py-2 border-t border-border/50">
+			<div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2 border-t border-border/50">
+				<div
+					className="flex items-center gap-1 overflow-x-auto"
+					role="group"
+					aria-label="Save folder"
+				>
+					{QUICK_NOTE_FOLDERS.map((folder) => {
+						const isSelected = folder === selectedFolder
+						return (
+							<Button
+								key={folder}
+								type="button"
+								size="sm"
+								variant={isSelected ? "secondary" : "ghost"}
+								aria-pressed={isSelected}
+								className={cn(
+									"shrink-0 px-2.5 text-xs font-medium",
+									!isSelected && "text-muted-foreground hover:text-foreground",
+								)}
+								onClick={() => selectFolder(folder)}
+							>
+								{folder}
+							</Button>
+						)
+					})}
+				</div>
 				<Button
 					type="button"
 					size="sm"
+					className="shrink-0"
 					onClick={() => {
 						void handleSaveAndClose()
 					}}
