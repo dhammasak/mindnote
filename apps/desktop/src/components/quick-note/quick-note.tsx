@@ -15,36 +15,33 @@ import { isMac } from "@/utils/platform"
 import { EditorKit } from "../editor/plugins/editor-kit"
 import { WindowPinButton } from "./window-pin-button"
 
-// Vault-root subfolders that Quick Note can target. The first one is the
-// default selection. Add or rename freely — values must match real folder
-// names inside the user's Obsidian vault.
-const QUICK_NOTE_FOLDERS = [
-	"MindNote",
-	"Google Keep",
-	"inbox",
-	"Clippings",
-] as const
-type QuickNoteFolder = (typeof QUICK_NOTE_FOLDERS)[number]
-const DEFAULT_QUICK_NOTE_FOLDER: QuickNoteFolder = "MindNote"
-const QUICK_NOTE_FOLDER_KEY = "mindnote.quickNote.saveFolder"
+// Quick Note "where to save" choices. MindNote and Inbox are subfolders of
+// the Obsidian vault — selecting them skips any dialog. SAVE_AS opens the
+// native save dialog rooted at the vault so the user can browse and choose
+// per-note.
+const SAVE_AS_TARGET = "Save as…" as const
+const QUICK_NOTE_TARGETS = ["MindNote", "Inbox", SAVE_AS_TARGET] as const
+type QuickNoteTarget = (typeof QUICK_NOTE_TARGETS)[number]
+const DEFAULT_QUICK_NOTE_TARGET: QuickNoteTarget = "MindNote"
+const QUICK_NOTE_TARGET_KEY = "mindnote.quickNote.saveFolder"
 
-function isQuickNoteFolder(value: unknown): value is QuickNoteFolder {
+function isQuickNoteTarget(value: unknown): value is QuickNoteTarget {
 	return (
 		typeof value === "string" &&
-		(QUICK_NOTE_FOLDERS as readonly string[]).includes(value)
+		(QUICK_NOTE_TARGETS as readonly string[]).includes(value)
 	)
 }
 
-function loadInitialFolderSelection(): QuickNoteFolder {
+function loadInitialTargetSelection(): QuickNoteTarget {
 	try {
-		const stored = localStorage.getItem(QUICK_NOTE_FOLDER_KEY)
-		if (isQuickNoteFolder(stored)) {
+		const stored = localStorage.getItem(QUICK_NOTE_TARGET_KEY)
+		if (isQuickNoteTarget(stored)) {
 			return stored
 		}
 	} catch {
 		// localStorage unavailable — fall through to default.
 	}
-	return DEFAULT_QUICK_NOTE_FOLDER
+	return DEFAULT_QUICK_NOTE_TARGET
 }
 
 // Strip filesystem-unsafe chars and clamp to a sane length.
@@ -123,21 +120,21 @@ export function QuickNote() {
 		plugins: EditorKit,
 	})
 
-	const [selectedFolder, setSelectedFolderState] = useState<QuickNoteFolder>(
-		loadInitialFolderSelection,
+	const [selectedTarget, setSelectedTargetState] = useState<QuickNoteTarget>(
+		loadInitialTargetSelection,
 	)
 	// Mirror the selection into a ref so the save callbacks (and the
 	// window-level keydown listener that depends on them) don't have to be
-	// recreated every time the user clicks a different folder button.
-	const selectedFolderRef = useRef(selectedFolder)
+	// recreated every time the user clicks a different target.
+	const selectedTargetRef = useRef(selectedTarget)
 	useEffect(() => {
-		selectedFolderRef.current = selectedFolder
-	}, [selectedFolder])
+		selectedTargetRef.current = selectedTarget
+	}, [selectedTarget])
 
-	const selectFolder = useCallback((folder: QuickNoteFolder) => {
-		setSelectedFolderState(folder)
+	const selectTarget = useCallback((target: QuickNoteTarget) => {
+		setSelectedTargetState(target)
 		try {
-			localStorage.setItem(QUICK_NOTE_FOLDER_KEY, folder)
+			localStorage.setItem(QUICK_NOTE_TARGET_KEY, target)
 		} catch {
 			// non-fatal; selection still applies for this window
 		}
@@ -146,6 +143,48 @@ export function QuickNote() {
 	useEffect(() => {
 		editor.tf.focus()
 	}, [editor])
+
+	// Common save-path resolution for ⌘S and ⌘↵/Esc/Save button.
+	// - Returns null on cancel (e.g. user dismisses Save as… dialog).
+	// - "Save as…" → native dialog rooted at the vault.
+	// - MindNote / Inbox → direct write to <vault>/<folder>/, no dialog.
+	// - No workspace at all → fallback native dialog so the work isn't lost.
+	const resolveSavePath = useCallback(
+		async (payload: {
+			fileBase: string
+			body: string
+		}): Promise<string | null> => {
+			const target = selectedTargetRef.current
+			const workspacePath = await loadActiveWorkspacePath()
+
+			if (target === SAVE_AS_TARGET) {
+				const chosenPath = await saveDialog({
+					title: "Save Note",
+					defaultPath: workspacePath
+						? join(workspacePath, `${payload.fileBase}.md`)
+						: `${payload.fileBase}.md`,
+					filters: [{ name: "Markdown", extensions: ["md"] }],
+				})
+				return chosenPath ?? null
+			}
+
+			if (workspacePath) {
+				const targetDir = await resolveSaveDir(target)
+				if (targetDir) {
+					return findUniquePath(targetDir, payload.fileBase)
+				}
+			}
+
+			// No workspace — fall back to native dialog; cancel preserves work.
+			const chosenPath = await saveDialog({
+				title: "Save Note",
+				defaultPath: `${payload.fileBase}.md`,
+				filters: [{ name: "Markdown", extensions: ["md"] }],
+			})
+			return chosenPath ?? null
+		},
+		[],
+	)
 
 	// ⌘S: save and switch to the in-app edit view (window stays open).
 	const handleSave = useCallback(async () => {
@@ -156,28 +195,15 @@ export function QuickNote() {
 			)
 			if (!payload) return
 
-			const targetDir = await resolveSaveDir(selectedFolderRef.current)
-			let savedPath: string
-			if (targetDir) {
-				savedPath = await findUniquePath(targetDir, payload.fileBase)
-				await writeTextFile(savedPath, payload.body)
-			} else {
-				// No workspace yet — fall back to a native dialog.
-				const chosenPath = await saveDialog({
-					title: "Save Note",
-					defaultPath: `${payload.fileBase}.md`,
-					filters: [{ name: "Markdown", extensions: ["md"] }],
-				})
-				if (!chosenPath) return
-				await writeTextFile(chosenPath, payload.body)
-				savedPath = chosenPath
-			}
+			const savedPath = await resolveSavePath(payload)
+			if (!savedPath) return
+			await writeTextFile(savedPath, payload.body)
 			navigate(`/edit?path=${encodeURIComponent(savedPath)}`, { replace: true })
 		} catch (error) {
 			console.error("Failed to save file:", error)
 			toast.error("Failed to save file")
 		}
-	}, [editor, navigate])
+	}, [editor, navigate, resolveSavePath])
 
 	// Save button / ⌘Enter / Esc: save and close the Quick Note window.
 	const handleSaveAndClose = useCallback(async () => {
@@ -193,28 +219,15 @@ export function QuickNote() {
 				return
 			}
 
-			const targetDir = await resolveSaveDir(selectedFolderRef.current)
-			if (targetDir) {
-				const filePath = await findUniquePath(targetDir, payload.fileBase)
-				await writeTextFile(filePath, payload.body)
-				await appWindow.close()
-				return
-			}
-
-			// No workspace — fall back to native dialog; keep window open if user cancels.
-			const chosenPath = await saveDialog({
-				title: "Save Note",
-				defaultPath: `${payload.fileBase}.md`,
-				filters: [{ name: "Markdown", extensions: ["md"] }],
-			})
-			if (!chosenPath) return
-			await writeTextFile(chosenPath, payload.body)
+			const savedPath = await resolveSavePath(payload)
+			if (!savedPath) return // user cancelled Save as… dialog — keep window open
+			await writeTextFile(savedPath, payload.body)
 			await appWindow.close()
 		} catch (error) {
 			console.error("Failed to save file:", error)
 			toast.error("Failed to save file")
 		}
-	}, [editor])
+	}, [editor, resolveSavePath])
 
 	// Window-level capture-phase keydown handler. EditorSurface only exposes
 	// onKeyDown on the outer container, *after* Plate's editable consumes
@@ -267,13 +280,13 @@ export function QuickNote() {
 				<div
 					className="flex items-center gap-1 overflow-x-auto"
 					role="group"
-					aria-label="Save folder"
+					aria-label="Save destination"
 				>
-					{QUICK_NOTE_FOLDERS.map((folder) => {
-						const isSelected = folder === selectedFolder
+					{QUICK_NOTE_TARGETS.map((target) => {
+						const isSelected = target === selectedTarget
 						return (
 							<Button
-								key={folder}
+								key={target}
 								type="button"
 								size="sm"
 								variant={isSelected ? "secondary" : "ghost"}
@@ -282,9 +295,9 @@ export function QuickNote() {
 									"shrink-0 px-2.5 text-xs font-medium",
 									!isSelected && "text-muted-foreground hover:text-foreground",
 								)}
-								onClick={() => selectFolder(folder)}
+								onClick={() => selectTarget(target)}
 							>
-								{folder}
+								{target}
 							</Button>
 						)
 					})}
