@@ -23,32 +23,35 @@ const isAutoformatEnabled = ({ editor }: { editor: SlateEditor }) =>
 			node.type === NOTE_TITLE_KEY,
 	})
 
+// `start` is the whole opening delimiter; `end` is the closing delimiter minus
+// the `trigger` character, which has not been inserted yet when the rule runs.
+// So ***x*** is start "***" / end "**" / trigger "*".
 const createMarkRules = () => [
 	createMarkInputRule({
 		marks: [KEYS.bold, KEYS.italic],
-		start: "**",
-		end: "*",
-		trigger: "*",
-		enabled: isAutoformatEnabled,
-	}),
-	createMarkInputRule({
-		marks: [KEYS.underline, KEYS.italic],
-		start: "__",
-		end: "*",
-		trigger: "*",
-		enabled: isAutoformatEnabled,
-	}),
-	createMarkInputRule({
-		marks: [KEYS.underline, KEYS.bold],
-		start: "__",
+		start: "***",
 		end: "**",
 		trigger: "*",
 		enabled: isAutoformatEnabled,
 	}),
 	createMarkInputRule({
+		marks: [KEYS.underline, KEYS.italic],
+		start: "__*",
+		end: "__",
+		trigger: "*",
+		enabled: isAutoformatEnabled,
+	}),
+	createMarkInputRule({
+		marks: [KEYS.underline, KEYS.bold],
+		start: "__**",
+		end: "__*",
+		trigger: "*",
+		enabled: isAutoformatEnabled,
+	}),
+	createMarkInputRule({
 		marks: [KEYS.underline, KEYS.bold, KEYS.italic],
-		start: "___",
-		end: "***",
+		start: "___***",
+		end: "___**",
 		trigger: "*",
 		enabled: isAutoformatEnabled,
 	}),
