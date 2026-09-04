@@ -49,7 +49,7 @@ The only Intel machine in the fleet — see the warning under the table.
 | macOS | 15.7.9 (24G830) |
 | Node | v24.16.0 (via nvm, `~/.nvm/versions/node/v24.16.0/bin/node`) — matches the reference |
 | pnpm | 10.30.0 (corepack only; `pnpm` is not on `PATH`, use `corepack pnpm …`) |
-| Rust | 1.98.1 — **ahead of the reference 1.95.0** |
+| Rust | 1.98.1 — **ahead of the reference 1.95.0**; `cargo`/`rustup` live in `~/.cargo/bin` and are **not on `PATH` in non-login shells** — export it first or `tauri dev` dies with "failed to run 'cargo metadata'" |
 | Repo path | `~/Code/mindnote/` |
 | Google Drive | mounted ✅ — `~/Library/CloudStorage/GoogleDrive-dhammasak@gmail.com/My Drive/` |
 | Obsidian vault | present ✅ — `~/Documents/Obsidian/Tety_Obsidian/` |
@@ -60,6 +60,10 @@ The only Intel machine in the fleet — see the warning under the table.
 **Intel, not Apple Silicon.** Rust builds are slower here (`cargo check --workspace`
 cold: ~2m10s), and anything this machine bundles is an x86_64 artifact unless it is
 cross-compiled on purpose. Check the target before cutting a release from here.
+`scripts/release.sh` now forces `--target universal-apple-darwin` and refuses to
+publish a single-arch DMG, so releases cut here are safe for the M1 MacBook Pro.
+Both Rust targets are installed; a clean universal release build took ~11 min
+(2026-09-04, v0.8.7).
 
 **Account name is `dhammasak`, not `tety`.** `/Users/tety` is a root-owned symlink
 to `/Users/dhammasak`, so absolute paths written on another machine still resolve.

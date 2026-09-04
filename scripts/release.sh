@@ -52,13 +52,23 @@ echo "New version:     $NEW_VERSION"
 [ -n "$NOTES" ] && echo "Notes:           $NOTES"
 
 # --- Write new version into tauri.conf.json ------------------------------
+# Patch only the version line. Re-serialising the whole file with
+# JSON.stringify would expand every single-line array back out and bury the
+# one-line bump in a 20-line reformat diff.
 if [ "$NEW_VERSION" != "$CURRENT_VERSION" ]; then
-  node -e "
+  NEW_VERSION="$NEW_VERSION" TAURI_CONF="$TAURI_CONF" node -e "
     const fs = require('fs');
-    const p = '$TAURI_CONF';
-    const c = JSON.parse(fs.readFileSync(p, 'utf8'));
-    c.version = '$NEW_VERSION';
-    fs.writeFileSync(p, JSON.stringify(c, null, '\t') + '\n');
+    const p = process.env.TAURI_CONF;
+    const src = fs.readFileSync(p, 'utf8');
+    const out = src.replace(
+      /^(\t\"version\": \")[^\"]+(\",)\$/m,
+      \`\$1\${process.env.NEW_VERSION}\$2\`,
+    );
+    if (out === src) {
+      console.error('ERROR: could not find the version line in ' + p);
+      process.exit(1);
+    }
+    fs.writeFileSync(p, out);
   "
   echo "Updated $TAURI_CONF -> $NEW_VERSION"
 fi

@@ -8,11 +8,11 @@
 ---
 
 ## Current Status
-กำลังขัด Quick Note window — ล่าสุดเพิ่ม `FlashCard` เป็นปลายทางบันทึก
+ปล่อย **v0.8.7** แล้ว (universal DMG อยู่ใน iCloud Releases) — Quick Note มีปลายทาง MindNote / Inbox / FlashCard / Save as… ครบ
 
 ## Active Tasks
 - [ ] กรอก INSTRUCTIONS.md
-- [ ] rebuild + ติดตั้ง DMG ใหม่บนทุกเครื่อง (build ที่ใช้อยู่เก่ากว่า picker + Save as…)
+- [ ] อัปเดต MacBook Pro + iMac ที่บ้านเป็น 0.8.7 (เมนู MindNote → Check for Update… หลัง iCloud ซิงก์)
 
 ## Key Decisions
 - **Quick Note destinations** = `MindNote` (default) / `Inbox` / `FlashCard` / `Save as…`
@@ -21,11 +21,13 @@
   ตัวเลือกล่าสุดจำไว้ใน localStorage key `mindnote.quickNote.saveFolder`
 
 ## Known Issues / Blockers
-- Build ที่ติดตั้งอยู่บนเครื่องยังเป็นรุ่นก่อน destination picker — UI จริงจะยังไม่โชว์ปุ่มจนกว่าจะ rebuild
+- DMG ไม่ได้ notarize (ad-hoc sign เท่านั้น) — เครื่องอื่นอาจต้องเปิดผ่าน right-click → Open ครั้งแรก
+- imac-condo: `cargo` ไม่อยู่บน `PATH` ของ non-login shell ต้อง `export PATH="$HOME/.cargo/bin:$PATH"` ก่อนสั่ง build
 
 ## Next Steps
-1. `pnpm dev:desktop` เพื่อดู Quick Note ของจริง แล้วออก DMG ใหม่
-2. กรอก INSTRUCTIONS.md
+1. เปิด MindNote 0.8.7 ตรวจแถบปลายทางใน Quick Note ของจริง
+2. อัปเดตอีกสองเครื่องผ่าน Check for Update…
+3. กรอก INSTRUCTIONS.md
 
 ---
 
