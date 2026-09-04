@@ -1,5 +1,9 @@
 # Repository Guidelines
 
+> **MindNote fork:** read [`MINDNOTE.md`](./MINDNOTE.md) first — it carries the project instructions,
+> the multi-machine / multi-platform protocol, and the upstream-sync conflict patterns.
+> The commands below still apply.
+
 ## Build, Test, and Development Commands
 - Run commands from the monorepo root unless noted. Root scripts use `task:scope` names.
 - `pnpm test:desktop` runs `turbo run test --filter=@mdit/desktop`.
