@@ -22,6 +22,7 @@ TETY develops from **multiple machines** with **multiple AI assistants**. Follow
 1. `git pull`
 2. `git log --oneline -10` — see what actually landed
 3. Read `.project/CONTEXT.md` + top of `.project/CHANGELOG.md` if the Google Drive folder is mounted (see Paths). The code is the source of truth; docs may lag.
+4. First time on this machine? See [`MACHINES.md`](./MACHINES.md) for setup and the per-machine toolchain record — record the machine there if it isn't listed.
 
 **End**
 1. Commit and push — never leave a machine holding unpushed commits
@@ -95,6 +96,8 @@ A pre-commit hook runs `pnpm lint:fix` automatically.
 | Release channel | private iCloud Drive DMG feed |
 
 The Drive `.project/` folder holds the longer narrative (CONTEXT, CHANGELOG, PROCESS, SKILLS). This file is self-contained so work is possible on a machine where Drive is not mounted.
+
+Per-machine paths and toolchain versions live in [`MACHINES.md`](./MACHINES.md) — check there before assuming a path exists on the machine you're on.
 
 ---
 
