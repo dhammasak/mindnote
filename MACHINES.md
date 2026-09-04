@@ -38,24 +38,38 @@ These are the versions the project is known-good on. A machine that differs isn'
 | git identity | TETY \<dhammasak@gmail.com\> |
 | Last verified | 2026-09-04 |
 
-### iMac
+### iMac Pro (`imac-condo`)
 
-Not yet recorded. On first run there, fill this in with the snippet below.
+The only Intel machine in the fleet — see the warning under the table.
 
 | | |
 |---|---|
-| Computer name | _TBD_ |
-| Model / chip | _TBD_ |
-| macOS | _TBD_ |
-| Node | _TBD_ |
-| pnpm | _TBD_ |
-| Rust | _TBD_ |
-| Repo path | _TBD (expected `~/Code/mindnote/`)_ |
-| Google Drive | _TBD_ |
-| Obsidian vault | _TBD_ |
-| Playwright browsers | _TBD_ |
-| git identity | _TBD_ |
-| Last verified | _TBD_ |
+| Computer name | Dhammasak's iMac Pro |
+| Model / chip | iMacPro1,1 — Intel Xeon W-2140B 3.2 GHz, 64 GB (**x86_64**) |
+| macOS | 15.7.9 (24G830) |
+| Node | v24.16.0 (via nvm, `~/.nvm/versions/node/v24.16.0/bin/node`) — **ahead of the reference 24.14.1** |
+| pnpm | 10.30.0 (corepack only; `pnpm` is not on `PATH`, use `corepack pnpm …`) |
+| Rust | 1.98.1 — **ahead of the reference 1.95.0** |
+| Repo path | `~/Code/mindnote/` |
+| Google Drive | mounted ✅ — `~/Library/CloudStorage/GoogleDrive-dhammasak@gmail.com/My Drive/` |
+| Obsidian vault | present ✅ — `~/Documents/Obsidian/Tety_Obsidian/` |
+| Playwright browsers | chromium-1208 — install still in flight as of this entry; re-verify before trusting `test:storybook` here |
+| git identity | dhammasak \<dhammasak@gmail.com\> — note the MacBook Pro uses `TETY` |
+| Last verified | 2026-09-04 |
+
+**Intel, not Apple Silicon.** Rust builds are slower here (`cargo check --workspace`
+cold: ~2m10s), and anything this machine bundles is an x86_64 artifact unless it is
+cross-compiled on purpose. Check the target before cutting a release from here.
+
+**Account name is `dhammasak`, not `tety`.** `/Users/tety` is a root-owned symlink
+to `/Users/dhammasak`, so absolute paths written on another machine still resolve.
+Prefer `~`-relative paths in anything new.
+
+**Toolchain is ahead of the reference versions** (Node 24.14.1 → 24.16.0 is a
+patch-level gap, Rust 1.95.0 → 1.98.1 is a real one). Nothing has drifted so far:
+`pnpm install --frozen-lockfile` and `cargo check --workspace --locked` both pass
+untouched, so neither lockfile moved. Left as-is pending a decision — either pin this machine
+down or raise the reference.
 
 ---
 
