@@ -69,15 +69,41 @@ fi
 # Finder access (System Settings -> Privacy -> Automation), which fails in
 # most build contexts. The resulting DMG looks plainer (no custom layout) but
 # functions identically for the drag-to-Applications install flow.
+# Always build a universal binary. Without an explicit target, Tauri builds for
+# the host arch only, so a release cut on the Intel iMac Pro would ship an
+# x86_64-only DMG that then syncs to the Apple Silicon MacBook Pro and installs
+# itself over a native build. Universal costs extra build time and is worth it.
+TARGET="universal-apple-darwin"
+for ARCH_TARGET in x86_64-apple-darwin aarch64-apple-darwin; do
+  if ! rustup target list --installed | grep -qx "$ARCH_TARGET"; then
+    echo "==> Installing missing Rust target: $ARCH_TARGET"
+    rustup target add "$ARCH_TARGET"
+  fi
+done
+
 echo ""
-echo "==> Building release DMG (this takes 3-8 minutes for a clean build)..."
-CI=true pnpm -C apps/desktop tauri build
+echo "==> Building universal release DMG (10-20 minutes for a clean build)..."
+CI=true pnpm -C apps/desktop tauri build --target "$TARGET"
 
 # --- Locate the produced DMG --------------------------------------------
-DMG_SRC=$(find target/release/bundle/dmg -name "*.dmg" -type f -print0 | xargs -0 ls -t 2>/dev/null | head -n 1 || true)
+# A targeted build lands under target/<target>/release/, not target/release/.
+BUNDLE_DIR="target/$TARGET/release/bundle/dmg"
+DMG_SRC=$(find "$BUNDLE_DIR" -name "*.dmg" -type f -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1 || true)
 if [ -z "$DMG_SRC" ] || [ ! -f "$DMG_SRC" ]; then
-  echo "ERROR: No .dmg found under target/release/bundle/dmg/" >&2
+  echo "ERROR: No .dmg found under $BUNDLE_DIR/" >&2
   exit 1
+fi
+
+# Guard the whole point of the exercise: refuse to publish a single-arch DMG.
+APP_BIN=$(find "target/$TARGET/release/bundle/macos" -type f -perm +111 -path "*/Contents/MacOS/*" 2>/dev/null | head -n 1 || true)
+if [ -n "$APP_BIN" ]; then
+  ARCHS=$(lipo -archs "$APP_BIN" 2>/dev/null || echo "")
+  echo "Built binary archs: ${ARCHS:-unknown}"
+  case "$ARCHS" in
+    *x86_64*arm64*|*arm64*x86_64*) ;;
+    *) echo "ERROR: expected a universal binary, got '${ARCHS:-unknown}'. Refusing to publish." >&2
+       exit 1 ;;
+  esac
 fi
 echo ""
 echo "Built DMG: $DMG_SRC"
