@@ -4,6 +4,16 @@
 
 ---
 
+## [2026-09-04] Release v0.8.8 + install — Claude Code @ macbook-pro-16
+- merge `fix/updater-install-button` เข้า `mindnote/customizations` (`328329e`) — **ไม่ merge เข้า `main`** เพราะ `main` ค้างอยู่ที่ พ.ค. 2026 ตามหลังอยู่ 51 commits (มี 7 commits ที่ยังไม่ถูกยกมา) การ merge เข้านั่นจะย้อนโค้ดทั้งก้อน
+- ตัด **v0.8.8** universal (`x86_64 arm64` ผ่าน guard ของ release.sh) วาง DMG + `latest.json` ลง iCloud Releases แล้ว
+- ติดตั้งทับ `/Applications/MindNote.app` บนเครื่องนี้ (0.8.6 → 0.8.8) — เครื่องนี้ยังไม่เคยขึ้น 0.8.7 สวนทางกับที่ CONTEXT เคยบันทึกว่าอัปเดตแล้ว (นั่นคือ imac-condo)
+- ยืนยันหลังติดตั้ง: `CFBundleShortVersionString` = 0.8.8, `lipo -archs` = `x86_64 arm64`, และ `allow-open-path` + path scope ฝังอยู่ใน ACL ของไบนารีจริง
+- สำรอง 0.8.6 ไว้ที่โฟลเดอร์ชั่วคราวของ session (หายเมื่อ session จบ — ถ้าอยากเก็บถาวรต้องย้ายเอง)
+- ⚠️ ลายเซ็นเป็น ad-hoc และเปลี่ยนทุกบิลด์ — สิทธิ์ระดับระบบ (global shortcut / accessibility) อาจต้องอนุญาตใหม่หลังอัปเดต
+
+---
+
 ## [2026-09-04] Fix: ปุ่ม Install ในแจ้งเตือนอัปเดตไม่ทำงาน — Claude Code @ imac-condo
 - อาการ: toast "MindNote 0.8.7 is available" ขึ้นปกติ แต่กด **Install** แล้วเงียบ ไม่มีอะไรเกิดขึ้น
 - สาเหตุที่ 1 — permission: capability ให้แค่ `opener:default` ซึ่งมีเฉพาะ `allow-open-url` / `allow-reveal-item-in-dir` / `allow-default-urls` **ไม่มี `allow-open-path`** → คำสั่ง `openPath(dmgPath)` ถูก ACL ปฏิเสธ
