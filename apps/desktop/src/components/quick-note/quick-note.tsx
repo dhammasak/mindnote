@@ -15,12 +15,17 @@ import { isMac } from "@/utils/platform"
 import { EditorKit } from "../editor/plugins/editor-kit"
 import { WindowPinButton } from "./window-pin-button"
 
-// Quick Note "where to save" choices. MindNote and Inbox are subfolders of
-// the Obsidian vault — selecting them skips any dialog. SAVE_AS opens the
-// native save dialog rooted at the vault so the user can browse and choose
-// per-note.
+// Quick Note "where to save" choices. MindNote, Inbox and FlashCard are
+// subfolders of the Obsidian vault — selecting them skips any dialog and the
+// folder is created on first use. SAVE_AS opens the native save dialog rooted
+// at the vault so the user can browse and choose per-note.
 const SAVE_AS_TARGET = "Save as…" as const
-const QUICK_NOTE_TARGETS = ["MindNote", "Inbox", SAVE_AS_TARGET] as const
+const QUICK_NOTE_TARGETS = [
+	"MindNote",
+	"Inbox",
+	"FlashCard",
+	SAVE_AS_TARGET,
+] as const
 type QuickNoteTarget = (typeof QUICK_NOTE_TARGETS)[number]
 const DEFAULT_QUICK_NOTE_TARGET: QuickNoteTarget = "MindNote"
 const QUICK_NOTE_TARGET_KEY = "mindnote.quickNote.saveFolder"
@@ -147,7 +152,7 @@ export function QuickNote() {
 	// Common save-path resolution for ⌘S and ⌘↵/Esc/Save button.
 	// - Returns null on cancel (e.g. user dismisses Save as… dialog).
 	// - "Save as…" → native dialog rooted at the vault.
-	// - MindNote / Inbox → direct write to <vault>/<folder>/, no dialog.
+	// - MindNote / Inbox / FlashCard → direct write to <vault>/<folder>/, no dialog.
 	// - No workspace at all → fallback native dialog so the work isn't lost.
 	const resolveSavePath = useCallback(
 		async (payload: {
