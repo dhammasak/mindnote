@@ -4,6 +4,16 @@
 
 ---
 
+## [2026-09-04] Fix: ปุ่ม Install ในแจ้งเตือนอัปเดตไม่ทำงาน — Claude Code @ imac-condo
+- อาการ: toast "MindNote 0.8.7 is available" ขึ้นปกติ แต่กด **Install** แล้วเงียบ ไม่มีอะไรเกิดขึ้น
+- สาเหตุที่ 1 — permission: capability ให้แค่ `opener:default` ซึ่งมีเฉพาะ `allow-open-url` / `allow-reveal-item-in-dir` / `allow-default-urls` **ไม่มี `allow-open-path`** → คำสั่ง `openPath(dmgPath)` ถูก ACL ปฏิเสธ
+- สาเหตุที่ 2 — silent failure: `onClick` เรียก `void openUpdateDmg(...)` ไม่มี `catch` → error ที่ ACL โยนกลับมาถูกกลืนหมด ผู้ใช้จึงไม่เห็นแม้แต่ข้อความ error
+- แก้: เพิ่ม `opener:allow-open-path` แบบมี scope จำกัดเฉพาะ `$HOME/Library/Mobile Documents/com~apple~CloudDocs/MindNote/Releases/*.dmg` (open_path ต้องผ่านทั้ง permission และ path scope) + ห่อปุ่ม Install ด้วย `installUpdate()` ที่ fallback ไป reveal in Finder แล้วขึ้น toast บอกเหตุผลเมื่อ mount ไม่สำเร็จ
+- ตรวจแล้ว: `pnpm lint`, `pnpm ts:check:desktop`, `cargo check -p mdit` เขียว และยืนยันว่า `allow-open-path` ปรากฏใน `gen/schemas/capabilities.json` ที่ build script ผลิตออกมาจริง
+- ยังไม่ได้ตัดรีลีส — build 0.8.7 ที่ติดตั้งอยู่ยังมีบั๊กนี้ ต้องขึ้น 0.8.8 ถึงจะกด Install ได้จริง ระหว่างนี้เปิด DMG จาก Finder เอง
+
+---
+
 ## [2026-09-04] Release v0.8.7 + install — Claude Code @ imac-condo
 - ตัดรีลีส **v0.8.7** (universal x86_64 + arm64) ผ่าน `pnpm release patch` — build ~11 นาทีบนเครื่อง Intel
 - วาง `MindNote-0.8.7.dmg` + `latest.json` ที่ `iCloud Drive/MindNote/Releases/` → **รีลีสแรกที่ลงกล่องจริง** (0.8.5 / 0.8.6 เคย bump แต่ไม่เคย build)
