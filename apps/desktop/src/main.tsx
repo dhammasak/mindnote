@@ -5,7 +5,6 @@ import ReactDOM from "react-dom/client"
 import { DndProvider } from "./components/dnd/dnd-provider"
 import { ErrorBoundary } from "./components/error-boundary/error-boundary"
 import { Hotkeys } from "./components/hotkeys/hotkeys"
-import { Updater } from "./components/updater/updater"
 import { WindowMenu } from "./components/window-menu/window-menu"
 import { DropProvider } from "./contexts/drop-context"
 import { ThemeProvider } from "./contexts/theme-context"
@@ -27,6 +26,5 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 				<Toaster />
 			</ThemeProvider>
 		</ErrorBoundary>
-		<Updater />
 	</React.StrictMode>,
 )
