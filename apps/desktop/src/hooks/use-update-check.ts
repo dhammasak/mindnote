@@ -3,6 +3,7 @@ import { toast } from "sonner"
 import {
 	checkForUpdate,
 	openUpdateDmg,
+	revealUpdateDmg,
 	type UpdateCheckResult,
 } from "@/lib/updater"
 
@@ -21,6 +22,30 @@ function recordCheckedNow(): void {
 	localStorage.setItem(LAST_CHECK_KEY, String(Date.now()))
 }
 
+/**
+ * Mount the DMG for the user. If macOS (or the opener scope) refuses, fall
+ * back to revealing the file in Finder and say what happened — a silent
+ * no-op on the Install button is worse than either outcome.
+ */
+async function installUpdate(dmgPath: string): Promise<void> {
+	try {
+		await openUpdateDmg(dmgPath)
+	} catch (error) {
+		try {
+			await revealUpdateDmg(dmgPath)
+			toast.error("Couldn't mount the installer", {
+				description: `Showed ${dmgPath} in Finder instead — open it there, then drag MindNote.app into /Applications. (${String(error)})`,
+				duration: 15_000,
+			})
+		} catch {
+			toast.error("Couldn't open the installer", {
+				description: `${dmgPath} — ${String(error)}`,
+				duration: 15_000,
+			})
+		}
+	}
+}
+
 function notifyUpdateAvailable(
 	result: Extract<UpdateCheckResult, { status: "available" }>,
 ): void {
@@ -32,7 +57,7 @@ function notifyUpdateAvailable(
 		action: {
 			label: "Install",
 			onClick: () => {
-				void openUpdateDmg(result.dmgPath)
+				void installUpdate(result.dmgPath)
 			},
 		},
 	})
