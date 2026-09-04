@@ -20,9 +20,7 @@
 				"transparent": true,
 				"maximized": true,
 				"windowEffects": {
-					"effects": [
-						"hudWindow"
-					]
+					"effects": ["hudWindow"]
 				},
 				"trafficLightPosition": {
 					"x": 18,
@@ -33,21 +31,14 @@
 		"security": {
 			"assetProtocol": {
 				"enable": true,
-				"scope": [
-					"*/**"
-				]
+				"scope": ["*/**"]
 			},
 			"csp": null
 		}
 	},
 	"bundle": {
 		"active": true,
-		"targets": [
-			"dmg",
-			"app",
-			"msi",
-			"appimage"
-		],
+		"targets": ["dmg", "app", "msi", "appimage"],
 		"createUpdaterArtifacts": false,
 		"icon": [
 			"icons/32x32.png",
@@ -59,20 +50,13 @@
 		"fileAssociations": [
 			{
 				"name": "Markdown Document",
-				"ext": [
-					"md",
-					"markdown"
-				],
+				"ext": ["md", "markdown"],
 				"role": "Editor",
 				"rank": "Owner",
-				"contentTypes": [
-					"net.daringfireball.markdown"
-				]
+				"contentTypes": ["net.daringfireball.markdown"]
 			}
 		],
-		"resources": [
-			"icons/trayTemplate.png"
-		],
+		"resources": ["icons/trayTemplate.png"],
 		"macOS": {
 			"signingIdentity": "-"
 		}
