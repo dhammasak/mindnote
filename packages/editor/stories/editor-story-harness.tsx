@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { createAIKit } from "../src/ai"
 import {
 	BasicBlocksKit,
+	FoldKit,
 	IndentKit,
 	ListKit,
 	ShortcutsKit,
@@ -154,6 +155,7 @@ const storyPlugins = [
 	...CodeDrawingKit,
 	...createBlockSelectionKit(),
 	...createFrontmatterKit(),
+	...FoldKit,
 	...createLinkKit({
 		services: storyLinkServices,
 	}),
