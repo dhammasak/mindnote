@@ -92,27 +92,30 @@ describe("workspace-tree-actions", () => {
 
 		const entries = await actions.readWorkspaceEntriesFromPath("/ws")
 
+		// Files now sort by modifiedAt descending: z.md (mtime 4000) > Untitled.md (mtime 2000).
 		expect(entries.map((entry) => entry.name)).toEqual([
 			"docs",
-			"Untitled.md",
 			"z.md",
+			"Untitled.md",
 		])
+		// b.md (mtime 8000) is newer than a.md (mtime 6000).
 		expect(entries[0]?.children?.map((entry) => entry.name)).toEqual([
-			"a.md",
 			"b.md",
+			"a.md",
 		])
+		// Files now sort by modifiedAt desc, so z.md (4000) > Untitled.md (2000).
 		expect(entries[1]).toEqual(
-			expect.objectContaining({
-				path: "/ws/Untitled.md",
-				createdAt: new Date(1000),
-				modifiedAt: new Date(2000),
-			}),
-		)
-		expect(entries[2]).toEqual(
 			expect.objectContaining({
 				path: "/ws/z.md",
 				createdAt: new Date(3000),
 				modifiedAt: new Date(4000),
+			}),
+		)
+		expect(entries[2]).toEqual(
+			expect.objectContaining({
+				path: "/ws/Untitled.md",
+				createdAt: new Date(1000),
+				modifiedAt: new Date(2000),
 			}),
 		)
 		expect(deps.fileSystemRepository.stat).not.toHaveBeenCalledWith(

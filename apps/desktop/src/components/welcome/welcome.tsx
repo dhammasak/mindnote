@@ -34,7 +34,7 @@ export function Welcome() {
 							<Logo className="size-full" />
 						</div>
 						<h1 className="text-4xl font-bold tracking-tighter text-[#0f172a]">
-							Mdit
+							MindNote
 						</h1>
 					</motion.div>
 

@@ -104,3 +104,43 @@
 .tabler-icon {
 	stroke-width: 1.6;
 }
+
+/*
+ * Fold — wrapper applied above every top-level block by FoldPlugin.
+ * Hidden blocks (descendants of a folded heading or list item) get the
+ * .mn-fold-hidden class and collapse out of the layout.
+ */
+.mn-fold-block {
+	display: contents;
+}
+
+.mn-fold-hidden {
+	display: none;
+}
+
+/*
+ * Indentation guides — vertical lines between nested list items.
+ * Each list item with --mn-indent: N draws N vertical lines in the area
+ * to its left (inside the parent block's padding-left), one per ancestor
+ * indent level. Matches Obsidian's "Indentation guides" behaviour.
+ */
+.mn-list-item {
+	position: relative;
+}
+
+.mn-list-item::before {
+	content: "";
+	position: absolute;
+	left: calc((var(--mn-indent, 0) * -24px) - 24px);
+	top: 0;
+	bottom: 0;
+	width: calc(var(--mn-indent, 0) * 24px);
+	background-image: repeating-linear-gradient(
+		to right,
+		var(--border) 0,
+		var(--border) 1px,
+		transparent 1px,
+		transparent 24px
+	);
+	pointer-events: none;
+}

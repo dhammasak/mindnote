@@ -1,15 +1,12 @@
 import { useCallback, useEffect } from "react"
 import { useShallow } from "zustand/shallow"
 import { closeTabOrHideWindow } from "@/lib/close-tab-or-hide-window"
+import { createNoteInDefaultFolder } from "@/lib/note-creation"
 import { useStore } from "@/store"
 import { installWindowMenu } from "./menu"
 
 export function WindowMenu() {
 	const {
-		createAndOpenNote,
-		activeTabId,
-		isEditMode,
-		closeActiveTab,
 		openFolderPicker,
 		activatePreviousTab,
 		activateNextTab,
@@ -19,10 +16,6 @@ export function WindowMenu() {
 		goForward,
 	} = useStore(
 		useShallow((s) => ({
-			createAndOpenNote: s.createAndOpenNote,
-			activeTabId: s.activeTabId,
-			isEditMode: s.isEditMode,
-			closeActiveTab: s.closeActiveTab,
 			openFolderPicker: s.openFolderPicker,
 			activatePreviousTab: s.activatePreviousTab,
 			activateNextTab: s.activateNextTab,
@@ -33,13 +26,19 @@ export function WindowMenu() {
 		})),
 	)
 
+	// Read isEditMode + activeTabId from the store at call time rather than
+	// from props captured here, so the macOS menu accelerator (⌘W) always
+	// sees the current value. Otherwise the first menu install can happen
+	// before EditNote sets isEditMode=true, leaving the first ⌘W press
+	// closing the tab instead of the window.
 	const handleCloseTab = useCallback(() => {
+		const state = useStore.getState()
 		void closeTabOrHideWindow({
-			isEditMode,
-			hasActiveTab: activeTabId !== null,
-			closeActiveTab,
+			isEditMode: state.isEditMode,
+			hasActiveTab: state.activeTabId !== null,
+			closeActiveTab: state.closeActiveTab,
 		})
-	}, [activeTabId, closeActiveTab, isEditMode])
+	}, [])
 
 	const {
 		toggleFileExplorer,
@@ -71,7 +70,9 @@ export function WindowMenu() {
 
 	useEffect(() => {
 		installWindowMenu({
-			createNote: createAndOpenNote,
+			createNote: () => {
+				void createNoteInDefaultFolder()
+			},
 			closeTabOrHideWindow: handleCloseTab,
 			openWorkspace: () => openFolderPicker(),
 			activatePreviousTab,
@@ -96,7 +97,6 @@ export function WindowMenu() {
 			hotkeys,
 		})
 	}, [
-		createAndOpenNote,
 		handleCloseTab,
 		openFolderPicker,
 		activatePreviousTab,

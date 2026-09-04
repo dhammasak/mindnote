@@ -22,6 +22,7 @@ import { toast } from "sonner"
 import { useShallow } from "zustand/shallow"
 import { useStore } from "@/store"
 import { isMac } from "@/utils/platform"
+import { RecentNotes } from "../recent-notes/recent-notes"
 import { Header } from "./header/header"
 import { useCommandMenuSelectionRestore } from "./hooks/use-command-menu-selection-restore"
 import { useExternalImageDrop } from "./hooks/use-external-image-drop"
@@ -69,10 +70,14 @@ export function Editor({ destroyOnClose }: { destroyOnClose?: boolean }) {
 				<Header hideNavigation={destroyOnClose} />
 				<div className="relative min-h-0 flex-1">
 					<div className="h-full bg-background">
-						<div
-							className="h-full w-full"
-							{...(isMac() && { "data-tauri-drag-region": "" })}
-						/>
+						{destroyOnClose ? (
+							<div
+								className="h-full w-full"
+								{...(isMac() && { "data-tauri-drag-region": "" })}
+							/>
+						) : (
+							<RecentNotes />
+						)}
 					</div>
 				</div>
 			</div>
@@ -218,7 +223,7 @@ function EditorContent({
 
 	const editor = usePlateEditor({
 		chunking: {
-			chunkSize: 100,
+			chunkSize: 500,
 			contentVisibilityAuto: true,
 			query: NodeApi.isEditor,
 		},
@@ -266,13 +271,22 @@ function EditorContent({
 			)
 
 			if (renamedPath === document.path) {
-				toast.error("Failed to rename note.")
+				// renameEntry silently returns the source path when the target
+				// already exists (or the entry is locked). The most common reason
+				// hit from the editor's title-rename flow is a duplicate filename,
+				// so make the message specific. Toast id dedupes — repeated saves
+				// while the title still conflicts won't stack multiple toasts.
+				toast.error(
+					`Couldn't rename note to "${rawTitle}" — a note with that title may already exist in this folder.`,
+					{ id: "editor-rename-from-title-failed" },
+				)
 			}
 
 			return renamedPath
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to rename note.",
+				{ id: "editor-rename-from-title-failed" },
 			)
 			return document.path
 		}
@@ -341,8 +355,16 @@ function EditorContent({
 		const closeListener = appWindow.listen(
 			"tauri://close-requested",
 			async () => {
-				const didSave = await handleSave("exit")
-				if (destroyOnClose && didSave) {
+				try {
+					await handleSave("exit")
+				} catch (error) {
+					console.error("Save on close failed:", error)
+				}
+				if (destroyOnClose) {
+					// In edit-window mode (Finder Open With), always destroy
+					// regardless of save outcome. Gating on didSave caused ⌘W via
+					// the macOS menu accelerator to leave the window open when the
+					// save raced or returned false, forcing the user to close twice.
 					appWindow.destroy()
 				}
 			},

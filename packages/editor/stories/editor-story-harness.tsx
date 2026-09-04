@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { createAIKit } from "../src/ai"
 import {
 	BasicBlocksKit,
+	FoldKit,
 	IndentKit,
 	ListKit,
 	ShortcutsKit,
@@ -154,6 +155,7 @@ const storyPlugins = [
 	...CodeDrawingKit,
 	...createBlockSelectionKit(),
 	...createFrontmatterKit(),
+	...FoldKit,
 	...createLinkKit({
 		services: storyLinkServices,
 	}),
@@ -241,7 +243,7 @@ function EditorStoryPane({
 	const didSetupRef = useRef(false)
 	const editor = usePlateEditor({
 		chunking: {
-			chunkSize: 100,
+			chunkSize: 500,
 			contentVisibilityAuto: true,
 			query: NodeApi.isEditor,
 		},

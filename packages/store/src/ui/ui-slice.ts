@@ -47,10 +47,6 @@ export type UISlice = {
 	openCommandMenuWithQuery: (query: string) => void
 	closeCommandMenu: () => void
 	toggleCommandMenu: () => void
-	isUpdateReady: boolean
-	isUpdateDownloading: boolean
-	setUpdateReady: (ready: boolean) => void
-	setUpdateDownloading: (downloading: boolean) => void
 	imagePreviewPath: string | null
 	setImagePreviewPath: (path: string | null) => void
 	openImagePreview: (path: string) => void
@@ -144,11 +140,6 @@ export const prepareUISlice =
 					? null
 					: state.commandMenuInitialQuery,
 			})),
-		isUpdateReady: false,
-		isUpdateDownloading: false,
-		setUpdateReady: (ready) => set({ isUpdateReady: ready }),
-		setUpdateDownloading: (downloading) =>
-			set({ isUpdateDownloading: downloading }),
 		imagePreviewPath: null,
 		setImagePreviewPath: (path) => set({ imagePreviewPath: path }),
 		openImagePreview: (path) => set({ imagePreviewPath: path }),

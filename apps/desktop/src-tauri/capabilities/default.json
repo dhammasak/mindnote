@@ -17,6 +17,14 @@
 		"core:window:allow-set-always-on-top",
 		"process:default",
 		"opener:default",
+		{
+			"identifier": "opener:allow-open-path",
+			"allow": [
+				{
+					"path": "$HOME/Library/Mobile Documents/com~apple~CloudDocs/MindNote/Releases/*.dmg"
+				}
+			]
+		},
 		"dialog:default",
 		"oauth:allow-start",
 		"fs:read-all",
@@ -26,6 +34,7 @@
 		"window-state:default",
 		"global-shortcut:allow-register",
 		"global-shortcut:allow-unregister",
+		"autostart:default",
 		{
 			"identifier": "fs:scope",
 			"allow": [

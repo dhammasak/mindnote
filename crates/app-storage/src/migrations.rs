@@ -19,7 +19,7 @@ static MIGRATIONS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/migrations");
 const RELEASE_DB_FILE_NAME: &str = "appdata.db";
 const DEV_DB_FILE_NAME: &str = "appdata.dev.db";
 const MIGRATIONS_TABLE: &str = "__migrations";
-const WORKSPACE_STATE_DIR_NAME: &str = ".mdit";
+const WORKSPACE_STATE_DIR_NAME: &str = ".mindnote";
 const LEGACY_WORKSPACE_DB_FILE_NAME: &str = "db.sqlite";
 
 struct MigrationFile {
@@ -251,8 +251,8 @@ mod tests {
     #[test]
     fn given_legacy_db_file_when_cleanup_runs_then_db_file_is_removed() {
         let workspace = TempWorkspace::new("mdit-migrations-cleanup-remove");
-        let state_dir = workspace.root().join(".mdit");
-        fs::create_dir_all(&state_dir).expect("failed to create .mdit directory");
+        let state_dir = workspace.root().join(".mindnote");
+        fs::create_dir_all(&state_dir).expect("failed to create .mindnote directory");
 
         let legacy_db_path = state_dir.join("db.sqlite");
         fs::write(&legacy_db_path, b"legacy").expect("failed to write legacy db");
@@ -266,8 +266,8 @@ mod tests {
     #[test]
     fn given_missing_legacy_db_when_cleanup_runs_then_it_succeeds() {
         let workspace = TempWorkspace::new("mdit-migrations-cleanup-missing");
-        let state_dir = workspace.root().join(".mdit");
-        fs::create_dir_all(&state_dir).expect("failed to create .mdit directory");
+        let state_dir = workspace.root().join(".mindnote");
+        fs::create_dir_all(&state_dir).expect("failed to create .mindnote directory");
 
         cleanup_legacy_workspace_index_db(workspace.root())
             .expect("cleanup should succeed when db is absent");
@@ -276,8 +276,8 @@ mod tests {
     #[test]
     fn given_workspace_settings_file_when_cleanup_runs_then_settings_file_is_preserved() {
         let workspace = TempWorkspace::new("mdit-migrations-cleanup-preserve");
-        let state_dir = workspace.root().join(".mdit");
-        fs::create_dir_all(&state_dir).expect("failed to create .mdit directory");
+        let state_dir = workspace.root().join(".mindnote");
+        fs::create_dir_all(&state_dir).expect("failed to create .mindnote directory");
 
         let legacy_db_path = state_dir.join("db.sqlite");
         let workspace_settings_path = state_dir.join("workspace.json");
