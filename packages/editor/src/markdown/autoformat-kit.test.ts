@@ -117,6 +117,28 @@ describe("autoformat mark rules", () => {
 			italic: true,
 		})
 	})
+
+	// Regression guard for the crash Plate's own `apply` throws when a mark rule
+	// closes inside its own leaf. The first mark ends the leaf, so the second
+	// rule's closing delimiter lands in a fresh one; deleting it empties that
+	// leaf, normalization removes it, and the match points `apply` captured
+	// before the delete now point at a path that no longer exists — Slate's
+	// set-nodes then reads `.offset` off undefined. `createMarkRule` defers
+	// normalization until `apply` returns. Every pair below crashed the editor
+	// on plain typing before that wrapper existed.
+	it.each([
+		["__**x__**", ["underline", "bold"]],
+		["~~**x~~**", ["strikethrough", "bold"]],
+		["==**x==**", ["highlight", "bold"]],
+		["`**x`**", ["code", "bold"]],
+		["__~~x__~~", ["underline", "strikethrough"]],
+		["**__x**__", ["bold", "underline"]],
+		["*__x*__", ["italic", "underline"]],
+	])("applies %j without crashing", (input, marks) => {
+		const [leaf] = leaves(input)
+		expect(leaf.text).toBe("x")
+		for (const mark of marks) expect(leaf[mark]).toBe(true)
+	})
 })
 
 describe("autoformat text substitutions", () => {

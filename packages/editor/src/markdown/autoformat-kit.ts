@@ -7,6 +7,7 @@ import {
 	createSlatePlugin,
 	defineInputRule,
 	KEYS,
+	type MarkInputRuleConfig,
 	type Path,
 	type SlateEditor,
 	type TextSubstitutionPattern,
@@ -23,97 +24,117 @@ const isAutoformatEnabled = ({ editor }: { editor: SlateEditor }) =>
 			node.type === NOTE_TITLE_KEY,
 	})
 
+// Plate's own `apply` captures its three match points up front, then deletes the
+// closing delimiter before selecting the range it just measured. When that
+// delimiter fills a whole leaf — which is what happens whenever the opening
+// delimiter sits inside an already-marked leaf, as in `~~**x~~**` — normalizing
+// away the emptied text node invalidates those points, and the `select` that
+// follows throws "Cannot read properties of undefined (reading 'offset')" out of
+// Slate's set-nodes. Holding normalization until `apply` returns keeps the empty
+// leaf, and therefore the points, alive for the rest of the transform.
+const createMarkRule = (config: MarkInputRuleConfig) => {
+	const rule = createMarkInputRule(config)
+	const { apply } = rule
+
+	return {
+		...rule,
+		apply: (...args: Parameters<typeof apply>) => {
+			// Plate's rule runner reads anything but `false` as "rule applied",
+			// so collapsing the original `boolean | void` to a boolean here is
+			// invisible to the caller.
+			let applied = false
+			args[0].editor.tf.withoutNormalizing(() => {
+				applied = apply(...args) !== false
+			})
+			return applied
+		},
+	}
+}
+
 // `start` is the whole opening delimiter; `end` is the closing delimiter minus
 // the `trigger` character, which has not been inserted yet when the rule runs.
 // So ***x*** is start "***" / end "**" / trigger "*".
 const createMarkRules = () => [
-	createMarkInputRule({
+	createMarkRule({
 		marks: [KEYS.bold, KEYS.italic],
 		start: "***",
 		end: "**",
 		trigger: "*",
 		enabled: isAutoformatEnabled,
 	}),
-	createMarkInputRule({
+	createMarkRule({
 		marks: [KEYS.underline, KEYS.italic],
 		start: "__*",
 		end: "__",
 		trigger: "*",
 		enabled: isAutoformatEnabled,
 	}),
-	createMarkInputRule({
-		marks: [KEYS.underline, KEYS.bold],
-		start: "__**",
-		end: "__*",
-		trigger: "*",
-		enabled: isAutoformatEnabled,
-	}),
-	createMarkInputRule({
+	createMarkRule({
 		marks: [KEYS.underline, KEYS.bold, KEYS.italic],
 		start: "___***",
 		end: "___**",
 		trigger: "*",
 		enabled: isAutoformatEnabled,
 	}),
-	createMarkInputRule({
+	createMarkRule({
 		mark: KEYS.bold,
 		start: "**",
 		end: "*",
 		trigger: "*",
 		enabled: isAutoformatEnabled,
 	}),
-	createMarkInputRule({
+	createMarkRule({
 		mark: KEYS.underline,
 		start: "__",
 		end: "_",
 		trigger: "_",
 		enabled: isAutoformatEnabled,
 	}),
-	createMarkInputRule({
+	createMarkRule({
 		mark: KEYS.italic,
 		start: "*",
 		trigger: "*",
 		enabled: isAutoformatEnabled,
 	}),
-	createMarkInputRule({
+	createMarkRule({
 		mark: KEYS.italic,
 		start: "_",
 		trigger: "_",
 		enabled: isAutoformatEnabled,
 	}),
-	createMarkInputRule({
+	createMarkRule({
 		mark: KEYS.strikethrough,
 		start: "~~",
 		end: "~",
 		trigger: "~",
 		enabled: isAutoformatEnabled,
 	}),
-	createMarkInputRule({
+	createMarkRule({
 		mark: KEYS.sup,
 		start: "^",
 		trigger: "^",
 		enabled: isAutoformatEnabled,
 	}),
-	createMarkInputRule({
+	createMarkRule({
 		mark: KEYS.sub,
 		start: "~",
 		trigger: "~",
 		enabled: isAutoformatEnabled,
 	}),
-	createMarkInputRule({
+	createMarkRule({
 		mark: KEYS.highlight,
 		start: "==",
 		end: "=",
 		trigger: "=",
 		enabled: isAutoformatEnabled,
 	}),
-	createMarkInputRule({
+	createMarkRule({
 		mark: KEYS.highlight,
 		start: "≡",
 		trigger: "≡",
 		enabled: isAutoformatEnabled,
 	}),
-	createMarkInputRule({
+	createMarkRule({
 		mark: KEYS.code,
 		start: "`",
 		trigger: "`",
