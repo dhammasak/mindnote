@@ -12,7 +12,7 @@ These are the versions the project is known-good on. A machine that differs isn'
 
 | Tool | Version |
 |---|---|
-| Node | 24.14.1 |
+| Node | 24.16.0 |
 | pnpm | 10.30.0 |
 | Rust / Cargo | 1.95.0 |
 | Xcode CLT | `/Applications/Xcode.app/Contents/Developer` |
@@ -28,7 +28,7 @@ These are the versions the project is known-good on. A machine that differs isn'
 | Computer name | Dhammasak's MacBook Pro |
 | Model / chip | MacBookPro18,1 — Apple M1 Pro (arm64) |
 | macOS | 26.6.2 (25G83) |
-| Node | v24.14.1 (via nvm, `~/.nvm/versions/node/v24.14.1/bin/node`) |
+| Node | v24.16.0 (via nvm, `~/.nvm/versions/node/v24.16.0/bin/node`) |
 | pnpm | 10.30.0 |
 | Rust | 1.95.0 |
 | Repo path | `~/Code/mindnote/` |
@@ -47,7 +47,7 @@ The only Intel machine in the fleet — see the warning under the table.
 | Computer name | Dhammasak's iMac Pro |
 | Model / chip | iMacPro1,1 — Intel Xeon W-2140B 3.2 GHz, 64 GB (**x86_64**) |
 | macOS | 15.7.9 (24G830) |
-| Node | v24.16.0 (via nvm, `~/.nvm/versions/node/v24.16.0/bin/node`) — **ahead of the reference 24.14.1** |
+| Node | v24.16.0 (via nvm, `~/.nvm/versions/node/v24.16.0/bin/node`) — matches the reference |
 | pnpm | 10.30.0 (corepack only; `pnpm` is not on `PATH`, use `corepack pnpm …`) |
 | Rust | 1.98.1 — **ahead of the reference 1.95.0** |
 | Repo path | `~/Code/mindnote/` |
@@ -65,11 +65,13 @@ cross-compiled on purpose. Check the target before cutting a release from here.
 to `/Users/dhammasak`, so absolute paths written on another machine still resolve.
 Prefer `~`-relative paths in anything new.
 
-**Toolchain is ahead of the reference versions** (Node 24.14.1 → 24.16.0 is a
-patch-level gap, Rust 1.95.0 → 1.98.1 is a real one). Nothing has drifted so far:
+**Rust is still ahead of the reference** (1.95.0 → 1.98.1). Nothing has drifted so far:
 `pnpm install --frozen-lockfile` and `cargo check --workspace --locked` both pass
-untouched, so neither lockfile moved. Left as-is pending a decision — either pin this machine
-down or raise the reference.
+untouched, so neither lockfile moved. Left as-is pending a decision on Rust.
+
+The Node question is settled: on 2026-09-04 the reference was raised to **24.16.0**
+and every machine pins that exact version through nvm (`.nvmrc` at the repo root).
+Verify with `node -v` before blaming a lockfile.
 
 ---
 
