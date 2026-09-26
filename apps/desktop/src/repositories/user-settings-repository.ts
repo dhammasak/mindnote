@@ -5,9 +5,9 @@ export const FONT_SCALE_STORAGE_KEY = "font-scale"
 export const DEFAULT_FONT_SCALE = 1
 export const LOCAL_API_ENABLED_STORAGE_KEY = "local-api-enabled"
 export const CHAT_PANEL_BETA_ENABLED_STORAGE_KEY = "chat-panel-beta-enabled"
-const MIN_FONT_SCALE = 0.8
-const MAX_FONT_SCALE = 1.6
-const FONT_SCALE_STEP = 0.1
+export const MIN_FONT_SCALE = 0.8
+export const MAX_FONT_SCALE = 1.8
+export const FONT_SCALE_STEP = 0.1
 
 const clampFontScale = (value: number) =>
 	Math.min(

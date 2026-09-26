@@ -125,7 +125,18 @@ export const IndentKit = [
 				if (options?.reverse) {
 					const currentIndent = (node as { indent?: number }).indent ?? 0
 
-					if (currentIndent <= 1) {
+					if (currentIndent === 0) {
+						return true
+					}
+
+					const listStyleType = (node as { listStyleType?: string })
+						.listStyleType
+
+					// Lists at indent=1 don't outdent via Shift+Tab — use Backspace
+					// at line-start to convert them to a paragraph instead. Without
+					// this guard, a top-level list item would silently drop its
+					// listStyleType when shift-tabbed.
+					if (listStyleType && currentIndent === 1) {
 						return true
 					}
 
@@ -157,7 +168,14 @@ export const IndentKit = [
 					}
 
 					editor.tf.withoutNormalizing(() => {
-						editor.tf.setNodes({ indent: currentIndent - 1 }, { at: path })
+						const newIndent = currentIndent - 1
+						if (newIndent === 0) {
+							// Match the convention used by the backspace handler:
+							// indent=0 means "no indent property at all".
+							editor.tf.unsetNodes("indent", { at: path })
+						} else {
+							editor.tf.setNodes({ indent: newIndent }, { at: path })
+						}
 
 						for (const { path: childPath, newIndent } of childBlocks) {
 							editor.tf.setNodes({ indent: newIndent }, { at: childPath })

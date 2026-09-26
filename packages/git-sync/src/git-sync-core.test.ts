@@ -202,9 +202,9 @@ describe("GitSyncCore", () => {
 		).toBe(false)
 	})
 
-	it("updates .mdit/.gitignore with missing entries only", async () => {
+	it("updates .mindnote/.gitignore with missing entries only", async () => {
 		const workspacePath = "/workspace"
-		const gitignorePath = "/workspace/.mdit/.gitignore"
+		const gitignorePath = "/workspace/.mindnote/.gitignore"
 		const { core, fileStore } = createCore({
 			workspacePath,
 			files: {

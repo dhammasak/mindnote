@@ -13,6 +13,7 @@ import {
 	useReadOnly,
 } from "platejs/react"
 import { useCallback } from "react"
+import { FoldChevron, useBlockHasChildren } from "./fold"
 import { resolveListStyleTypeByIndent } from "./list-style-utils"
 
 const config: Record<
@@ -52,7 +53,7 @@ function List(props: PlateElementProps) {
 			start={listStart}
 		>
 			{Marker && <Marker {...props} />}
-			{Li ? <Li {...props} /> : <li>{props.children}</li>}
+			{Li ? <Li {...props} /> : <DefaultLi {...props} />}
 		</List>
 	)
 }
@@ -86,14 +87,43 @@ function TodoMarker(props: PlateElementProps) {
 }
 
 function TodoLi(props: PlateElementProps) {
+	const indent = ((props.element as { indent?: number }).indent ?? 0) as number
+	const elementId =
+		typeof props.element.id === "string" ? props.element.id : undefined
+	const hasChildren = useBlockHasChildren(props.path, indent)
 	return (
 		<li
 			className={cn(
 				"list-none",
+				"mn-list-item group",
 				(props.element.checked as boolean) &&
 					"text-muted-foreground line-through",
 			)}
+			data-indent={indent}
+			style={{ "--mn-indent": indent } as React.CSSProperties}
 		>
+			{elementId && hasChildren && (
+				<FoldChevron elementId={elementId} className="-left-10" />
+			)}
+			{props.children}
+		</li>
+	)
+}
+
+function DefaultLi(props: PlateElementProps) {
+	const indent = ((props.element as { indent?: number }).indent ?? 0) as number
+	const elementId =
+		typeof props.element.id === "string" ? props.element.id : undefined
+	const hasChildren = useBlockHasChildren(props.path, indent)
+	return (
+		<li
+			className="mn-list-item group"
+			data-indent={indent}
+			style={{ "--mn-indent": indent } as React.CSSProperties}
+		>
+			{elementId && hasChildren && (
+				<FoldChevron elementId={elementId} className="-left-10" />
+			)}
 			{props.children}
 		</li>
 	)

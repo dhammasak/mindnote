@@ -23,7 +23,6 @@ import { GraphViewOpenButton } from "./ui/graph-view-open-button"
 import { PinnedList } from "./ui/pinned-list"
 import { SettingsMenu } from "./ui/settings-menu"
 import { TopMenu } from "./ui/top-menu"
-import { UpdateButton } from "./ui/update-button"
 import { WorkspaceDropdown } from "./ui/workspace-dropdown"
 
 export function FileExplorer() {
@@ -403,7 +402,6 @@ export function FileExplorer() {
 						</div>
 					</div>
 					<footer className="px-2 pb-2 flex flex-col">
-						<UpdateButton />
 						<GraphViewOpenButton disabled={!workspacePath} />
 						<SettingsMenu />
 						<FeedbackButton />

@@ -42,7 +42,7 @@ const makeDir = (
 })
 
 describe("sortWorkspaceEntries", () => {
-	it("sorts directories first and prioritizes untitled files", () => {
+	it("sorts directories first; files fall back to name when mtime is missing", () => {
 		const entries: WorkspaceEntry[] = [
 			makeDir("/root/B", "B", [
 				makeFile("/root/B/b.md", "b.md"),
@@ -59,20 +59,43 @@ describe("sortWorkspaceEntries", () => {
 
 		const result = sortWorkspaceEntries(entries)
 
+		// With all modifiedAt=undefined, files tie at 0 and fall back to
+		// alphabetical name order via localeCompare (lowercase before capital
+		// in default locale). Directories remain alphabetical.
 		expect(result.map((entry) => entry.name)).toEqual([
 			"A",
 			"B",
-			"Untitled 3.md",
 			"alpha.md",
 			"note.md",
+			"Untitled 3.md",
 		])
 		expect(result[0].children?.map((entry) => entry.name)).toEqual([
-			"Untitled 1.md",
 			"b.md",
+			"Untitled 1.md",
 		])
 		expect(result[1].children?.map((entry) => entry.name)).toEqual([
-			"Untitled 2.md",
 			"b.md",
+			"Untitled 2.md",
+		])
+	})
+
+	it("sorts files by modifiedAt descending when present", () => {
+		const older = new Date("2026-05-01T00:00:00Z")
+		const newer = new Date("2026-05-10T00:00:00Z")
+		const newest = new Date("2026-05-14T00:00:00Z")
+
+		const entries: WorkspaceEntry[] = [
+			{ ...makeFile("/root/old.md", "old.md"), modifiedAt: older },
+			{ ...makeFile("/root/newest.md", "newest.md"), modifiedAt: newest },
+			{ ...makeFile("/root/middle.md", "middle.md"), modifiedAt: newer },
+		]
+
+		const result = sortWorkspaceEntries(entries)
+
+		expect(result.map((entry) => entry.name)).toEqual([
+			"newest.md",
+			"middle.md",
+			"old.md",
 		])
 	})
 })

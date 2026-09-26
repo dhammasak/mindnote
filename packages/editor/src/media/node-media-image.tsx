@@ -35,6 +35,13 @@ function isSafeEmbedTarget(path: string): boolean {
 	return !hasParentTraversal(normalized)
 }
 
+// Mirrors `ATTACHMENTS_SUBFOLDER` in apps/desktop/.../image-import-host.ts:
+// MindNote always saves new attachments under <vault>/Attached File/, matching
+// the default Obsidian "Attachment folder path" setting. Wikilink embeds in
+// notes that came from Obsidian are typically bare filenames (no directory
+// prefix), so we resolve those against the attachment folder too.
+const VAULT_ATTACHMENTS_SUBFOLDER = "Attached File"
+
 function resolveImageSrc(
 	element: ImageElementWithEmbed,
 	workspaceState: MediaImageWorkspaceState,
@@ -64,7 +71,15 @@ function resolveImageSrc(
 		if (!workspacePath) {
 			return ""
 		}
-		baseSrc = resolve(workspacePath, rawUrl)
+		// Obsidian writes bare-filename wikilink embeds (e.g. `![[foo.png]]`)
+		// and relies on the vault-wide attachment folder to locate the file.
+		// MindNote uses "Attached File" as that folder, so a path with no
+		// directory component resolves against <vault>/Attached File/<name>.
+		// Paths that already include a slash are treated as vault-relative.
+		const isBareFilename = !rawUrl.includes("/")
+		baseSrc = isBareFilename
+			? resolve(workspacePath, VAULT_ATTACHMENTS_SUBFOLDER, rawUrl)
+			: resolve(workspacePath, rawUrl)
 	} else {
 		if (!tabPath) {
 			return ""

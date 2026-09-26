@@ -1,0 +1,12 @@
+{
+	"version": "0.0.1",
+	"configurations": [
+		{
+			"name": "editor-storybook",
+			"runtimeExecutable": "pnpm",
+			"runtimeArgs": ["-C", "packages/editor", "storybook"],
+			"port": 4310,
+			"url": "http://127.0.0.1:4310"
+		}
+	]
+}

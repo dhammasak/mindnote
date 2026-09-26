@@ -17,6 +17,7 @@ import { useAutoIndexing } from "./hooks/use-auto-indexing"
 import { useFontScale } from "./hooks/use-font-scale"
 import { useGitSync } from "./hooks/use-git-sync"
 import { useStoreRuntimeLifecycle } from "./hooks/use-store-runtime-lifecycle"
+import { useAutoUpdateCheck } from "./hooks/use-update-check"
 import { useWorkspaceLifecycle } from "./hooks/use-workspace-lifecycle"
 import { startLocalApiServer, stopLocalApiServer } from "./lib/local-api"
 import { shouldRunLocalApiServer } from "./lib/local-api-runtime"
@@ -37,6 +38,7 @@ export function App() {
 	useStoreRuntimeLifecycle()
 	useAutoIndexing(workspacePath)
 	useGitSync(workspacePath)
+	useAutoUpdateCheck()
 
 	const mutedBgClass = isWindows10() || isLinux() ? "bg-muted" : "bg-muted/70"
 

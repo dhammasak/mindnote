@@ -7,7 +7,7 @@ import {
 } from "@tauri-apps/plugin-fs"
 import { join } from "pathe"
 
-const WORKSPACE_STATE_DIR = ".mdit"
+const WORKSPACE_STATE_DIR = ".mindnote"
 const WORKSPACE_CONFIG_FILE = "workspace.json"
 
 const getWorkspaceConfigPath = (workspacePath: string): string => {

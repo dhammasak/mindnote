@@ -10,11 +10,27 @@ export default defineConfig({
 	test: {
 		projects: [
 			{
+				resolve: {
+					alias: [
+						// Node can't load the stylesheet node-equation.tsx lazily
+						// imports; unit tests never render KaTeX, so stub it out.
+						{
+							find: /^katex\/dist\/katex\.min\.css$/,
+							replacement: path.join(packageDir, "test/css-stub.ts"),
+						},
+					],
+				},
 				test: {
 					environment: "node",
 					exclude: ["stories/**", "e2e/**"],
 					include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
 					name: "unit",
+					server: {
+						// Force Vite to transform these so the CSS alias above applies.
+						// Left externalised, Node's ESM loader chokes on katex's
+						// stylesheet import (@platejs/math -> katex -> katex.min.css).
+						deps: { inline: [/katex/, /@platejs\/math/] },
+					},
 				},
 			},
 			{

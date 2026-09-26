@@ -1,8 +1,11 @@
 import { createAIKit } from "@mdit/editor/ai"
 import {
 	BasicBlocksKit,
+	FoldKit,
 	ListKit,
+	MoveBlockShortcutsKit,
 	ShortcutsKit,
+	TodoCycleKit,
 	UtilsKit,
 } from "@mdit/editor/basic"
 import { CalloutKit } from "@mdit/editor/callout"
@@ -83,12 +86,15 @@ export const createEditorKit = ({
 		...DateKit,
 		...DndKit,
 		...FloatingToolbarKit,
+		...FoldKit,
 		...createLinkKit({ services: desktopLinkServices }),
 		...ListKit,
 		...(mdx ? MarkdownKit : MarkdownKitNoMdx),
 		...MathKit,
 		...createMediaKit({ host: desktopMediaHost }),
+		...MoveBlockShortcutsKit,
 		...ShortcutsKit,
+		...TodoCycleKit,
 		...createSlashKit({ host: desktopSlashHost }),
 		...SuggestionKit,
 		...createTagKit({ host: desktopTagHost }),

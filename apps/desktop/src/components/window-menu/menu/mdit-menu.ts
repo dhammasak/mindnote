@@ -1,5 +1,6 @@
 import { type AppHotkeyMap, hotkeyToMenuAccelerator } from "@mdit/store/hotkeys"
 import { MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu"
+import { runManualUpdateCheck } from "@/hooks/use-update-check"
 
 export async function createMditMenu({
 	toggleSettings,
@@ -9,7 +10,7 @@ export async function createMditMenu({
 	hotkeys: AppHotkeyMap
 }) {
 	return await Submenu.new({
-		text: "Mdit",
+		text: "MindNote",
 		items: [
 			await PredefinedMenuItem.new({
 				text: "Services",
@@ -18,6 +19,13 @@ export async function createMditMenu({
 			await PredefinedMenuItem.new({
 				text: "Separator",
 				item: "Separator",
+			}),
+			await MenuItem.new({
+				id: "check-for-update",
+				text: "Check for Update…",
+				action: () => {
+					void runManualUpdateCheck()
+				},
 			}),
 			await MenuItem.new({
 				id: "settings",

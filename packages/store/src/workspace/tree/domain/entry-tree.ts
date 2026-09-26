@@ -6,14 +6,6 @@ import type { WorkspaceEntry } from "../../workspace-state"
 
 const EMPTY_CHILDREN: WorkspaceEntry[] = []
 
-function isUntitledNote(name: string): boolean {
-	if (!name.endsWith(".md")) {
-		return false
-	}
-	const nameWithoutExtension = name.slice(0, -3) // Remove '.md'
-	return nameWithoutExtension.startsWith("Untitled")
-}
-
 export function findEntryByPath(
 	entries: WorkspaceEntry[],
 	targetPath: string,
@@ -71,16 +63,21 @@ export function sortWorkspaceEntries(
 				return a.isDirectory ? -1 : 1
 			}
 
-			// For files, prioritize "Untitled" notes
-			if (!a.isDirectory && !b.isDirectory) {
-				const aIsUntitled = isUntitledNote(a.name)
-				const bIsUntitled = isUntitledNote(b.name)
-
-				if (aIsUntitled !== bIsUntitled) {
-					return aIsUntitled ? -1 : 1
-				}
+			// Directories: alphabetical (folder mtimes aren't reliably meaningful).
+			if (a.isDirectory && b.isDirectory) {
+				return a.name.localeCompare(b.name)
 			}
 
+			// Files: most-recently-modified first. Newly created Untitled notes
+			// land on top by virtue of having the current time as their mtime,
+			// so the old "Untitled-first" special case isn't needed.
+			const aTime = a.modifiedAt?.getTime() ?? 0
+			const bTime = b.modifiedAt?.getTime() ?? 0
+			if (aTime !== bTime) {
+				return bTime - aTime
+			}
+
+			// Tiebreaker (e.g. fresh from snapshot with no mtime): alphabetical.
 			return a.name.localeCompare(b.name)
 		})
 }

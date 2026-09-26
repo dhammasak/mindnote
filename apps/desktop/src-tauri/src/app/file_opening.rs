@@ -9,6 +9,12 @@ pub struct AppState {
     pub opened_files: Mutex<Vec<String>>,
     pub suppress_next_main_show: Mutex<bool>,
     pub next_edit_window_id: Mutex<u64>,
+    /// True when MindNote was launched purely to open one or more .md files
+    /// (via Finder "Open With" / file association). The window lifecycle uses
+    /// this to (1) skip creating the main window shell entirely and (2) quit
+    /// the app when the last edit window is destroyed, so the user gets a
+    /// single close = single exit experience.
+    pub launched_for_file_open: Mutex<bool>,
 }
 
 impl AppState {
@@ -90,6 +96,9 @@ fn open_edit_window(app_handle: &tauri::AppHandle, file_path: &str) {
         config.url = tauri::WebviewUrl::App(url.into());
         config.transparent = false;
         config.window_effects = None;
+        // Open edit windows maximized so opening a .md file from Finder lands
+        // on a full-size window, matching the main window's default.
+        config.maximized = true;
 
         tauri::WebviewWindowBuilder::from_config(app_handle, &config)
             .ok()?
@@ -122,14 +131,28 @@ pub fn handle_opened_event(app_handle: &tauri::AppHandle, urls: Vec<tauri::Url>)
         return;
     }
 
-    {
-        let state = app_handle.state::<AppState>();
-        let mut opened_files = state.opened_files.lock().unwrap();
-        *opened_files = file_paths.clone();
-        drop(opened_files);
-        state.mark_suppress_next_main_show();
-        open_edit_windows(app_handle, &file_paths);
+    let state = app_handle.state::<AppState>();
+    let mut opened_files = state.opened_files.lock().unwrap();
+    *opened_files = file_paths.clone();
+    drop(opened_files);
+    state.mark_suppress_next_main_show();
+
+    // If the main window is still hidden when this fires, MindNote was
+    // launched specifically to open these files (vs. dispatching to an already
+    // running session with a vault open). Tear the main window down entirely
+    // so there's no orphan shell to surface later, and remember the mode so
+    // the lifecycle handler can quit the app when the last edit window closes.
+    if let Some(main_window) = app_handle.get_webview_window("main") {
+        let main_visible = main_window.is_visible().unwrap_or(false);
+        if !main_visible {
+            if let Ok(mut flag) = state.launched_for_file_open.lock() {
+                *flag = true;
+            }
+            let _ = main_window.destroy();
+        }
     }
+
+    open_edit_windows(app_handle, &file_paths);
 }
 
 /// Opens the edit window if there are files in opened_files (for non-macOS platforms).

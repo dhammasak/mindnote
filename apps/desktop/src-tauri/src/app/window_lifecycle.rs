@@ -27,11 +27,72 @@ pub fn show_main_window(
     show_and_focus_main_window(window);
 }
 
+fn opened_files_present(app_state: &file_opening::AppState) -> bool {
+    app_state
+        .opened_files
+        .lock()
+        .ok()
+        .map(|v| !v.is_empty())
+        .unwrap_or(false)
+}
+
+fn mark_launched_for_file_open(app_state: &file_opening::AppState) {
+    if let Ok(mut flag) = app_state.launched_for_file_open.lock() {
+        *flag = true;
+    }
+}
+
+fn is_launched_for_file_open(app_state: &file_opening::AppState) -> bool {
+    app_state
+        .launched_for_file_open
+        .lock()
+        .ok()
+        .map(|v| *v)
+        .unwrap_or(false)
+}
+
+fn handle_window_destroyed(app_handle: &tauri::AppHandle, label: &str) {
+    if !label.starts_with("edit-") {
+        return;
+    }
+    let app_state = app_handle.state::<file_opening::AppState>();
+    if !is_launched_for_file_open(&app_state) {
+        return;
+    }
+    // Count remaining edit windows (the destroyed one may still appear in the
+    // window map briefly during this event — exclude by label).
+    let remaining = app_handle
+        .webview_windows()
+        .iter()
+        .filter(|(lbl, _)| {
+            let l = lbl.as_str();
+            l != label && l.starts_with("edit-")
+        })
+        .count();
+    if remaining == 0 {
+        app_handle.exit(0);
+    }
+}
+
 pub fn handle_run_event(app_handle: &tauri::AppHandle, event: &tauri::RunEvent) {
     match event {
         tauri::RunEvent::Ready { .. } => {
             if let Some(main_window) = app_handle.get_webview_window("main") {
-                let _ = main_window.hide();
+                let app_state = app_handle.state::<file_opening::AppState>();
+                if opened_files_present(&app_state) {
+                    // CLI args carried file paths (non-macOS launch with .md
+                    // files). Tear down the main shell up front and remember
+                    // the mode so we can quit when the last edit window closes.
+                    mark_launched_for_file_open(&app_state);
+                    let _ = main_window.destroy();
+                } else {
+                    // On macOS the file URLs arrive in RunEvent::Opened, which
+                    // fires after Ready — opened_files is still empty here.
+                    // file_opening::handle_opened_event handles destroy + flag
+                    // for that path. For normal launch we just hide so the
+                    // empty shell isn't visible.
+                    let _ = main_window.hide();
+                }
             }
             #[cfg(not(target_os = "macos"))]
             {
@@ -49,6 +110,11 @@ pub fn handle_run_event(app_handle: &tauri::AppHandle, event: &tauri::RunEvent) 
         #[cfg(target_os = "macos")]
         tauri::RunEvent::Opened { urls } => {
             file_opening::handle_opened_event(app_handle, urls.clone());
+        }
+        tauri::RunEvent::WindowEvent { label, event, .. } => {
+            if matches!(event, tauri::WindowEvent::Destroyed) {
+                handle_window_destroyed(app_handle, label);
+            }
         }
         _ => {}
     }

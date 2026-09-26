@@ -2,8 +2,9 @@ import { cn } from "@mdit/ui/lib/utils"
 import { cva, type VariantProps } from "class-variance-authority"
 import type { PlateElementProps } from "platejs/react"
 import { PlateElement } from "platejs/react"
+import { FoldChevron } from "./fold"
 
-const headingVariants = cva("relative mb-1", {
+const headingVariants = cva("relative mb-1 group", {
 	variants: {
 		variant: {
 			h1: "mt-[1.2em] pb-1 font-heading text-4xl font-bold",
@@ -22,6 +23,8 @@ export function HeadingElement({
 }: PlateElementProps & VariantProps<typeof headingVariants>) {
 	const path = props.api.findPath(props.element)
 	const isFirstChild = path && path.length === 1 && path[0] === 0
+	const elementId =
+		typeof props.element.id === "string" ? props.element.id : undefined
 
 	return (
 		<PlateElement
@@ -33,6 +36,7 @@ export function HeadingElement({
 			)}
 			{...props}
 		>
+			{elementId && <FoldChevron elementId={elementId} />}
 			{props.children}
 		</PlateElement>
 	)
