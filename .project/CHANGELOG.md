@@ -4,7 +4,7 @@
 
 ---
 
-## [2026-09-04] Release v0.8.8 + install — Claude Code @ macbook-pro-16
+## [2026-09-26] Release v0.8.8 + install — Claude Code @ macbook-pro-16
 - merge `fix/updater-install-button` เข้า `mindnote/customizations` (`328329e`) — **ไม่ merge เข้า `main`** เพราะ `main` ค้างอยู่ที่ พ.ค. 2026 ตามหลังอยู่ 51 commits (มี 7 commits ที่ยังไม่ถูกยกมา) การ merge เข้านั่นจะย้อนโค้ดทั้งก้อน
 - ตัด **v0.8.8** universal (`x86_64 arm64` ผ่าน guard ของ release.sh) วาง DMG + `latest.json` ลง iCloud Releases แล้ว
 - ติดตั้งทับ `/Applications/MindNote.app` บนเครื่องนี้ (0.8.6 → 0.8.8) — เครื่องนี้ยังไม่เคยขึ้น 0.8.7 สวนทางกับที่ CONTEXT เคยบันทึกว่าอัปเดตแล้ว (นั่นคือ imac-condo)
@@ -14,7 +14,7 @@
 
 ---
 
-## [2026-09-04] Fix: ปุ่ม Install ในแจ้งเตือนอัปเดตไม่ทำงาน — Claude Code @ imac-condo
+## [2026-09-26] Fix: ปุ่ม Install ในแจ้งเตือนอัปเดตไม่ทำงาน — Claude Code @ macbook-pro-16
 - อาการ: toast "MindNote 0.8.7 is available" ขึ้นปกติ แต่กด **Install** แล้วเงียบ ไม่มีอะไรเกิดขึ้น
 - สาเหตุที่ 1 — permission: capability ให้แค่ `opener:default` ซึ่งมีเฉพาะ `allow-open-url` / `allow-reveal-item-in-dir` / `allow-default-urls` **ไม่มี `allow-open-path`** → คำสั่ง `openPath(dmgPath)` ถูก ACL ปฏิเสธ
 - สาเหตุที่ 2 — silent failure: `onClick` เรียก `void openUpdateDmg(...)` ไม่มี `catch` → error ที่ ACL โยนกลับมาถูกกลืนหมด ผู้ใช้จึงไม่เห็นแม้แต่ข้อความ error

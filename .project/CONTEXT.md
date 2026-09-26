@@ -1,6 +1,6 @@
 # Project Context: MindNote (fork)
 
-**Last Updated:** 2026-09-04  
+**Last Updated:** 2026-09-26  
 **Last Platform:** Claude Code  
 **Last Machine:** macbook-pro-16  
 **Project Phase:** Active development
